@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+AutoUpdate-Show-In-Client: true
+OpenIDE-Module: com.candidate1064557.dashcam_ingest
+OpenIDE-Module-Localizing-Bundle: com/candidate1064557/dashcam_ingest/Bundle.properties
+OpenIDE-Module-Specification-Version: 1.0
+

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="com.candidate1064557.dashcam_ingest">
+    <module_version install_time="1705283685826" last="true" origin="installer" specification_version="1.0">
+        <file crc="1290345" name="config/Modules/com-candidate1064557-dashcam_ingest.xml"/>
+        <file crc="567320492" name="modules/com-candidate1064557-dashcam_ingest.jar"/>
+    </module_version>
+</module>
