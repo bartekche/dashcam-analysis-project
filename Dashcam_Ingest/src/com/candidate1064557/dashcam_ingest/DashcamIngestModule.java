@@ -47,36 +47,34 @@ class DashcamIngestModule implements DataSourceIngestModule {
             
             progressBar.switchToDeterminate(numberOfMP4Files);
             
-            boolean isWindows = System.getProperty("os.name")
+            final boolean isWindows = System.getProperty("os.name")
                     .toLowerCase().startsWith("windows");
             
-            ProcessBuilder builder = new ProcessBuilder();
-            if (isWindows) {
-                builder.command(
-                        "exiftool.exe -p \"$gpslatitude# $gpslongitude# $gpsspeed# ${GPSDateTime;DateFmt('%s%f')}\" -ee3 C:\\Users\\Bartek\\Desktop\\102SAVED\\GRMS0001.MP4");
-            } else {
-                builder.command("sh", "-c", "ls"); // todo
-            }
-            
-            builder.directory(new File(System.getProperty("user.home")));
-                Process process = builder.start();
-            
-            BufferedReader reader = new BufferedReader(
-                new InputStreamReader(process.getInputStream()));
-            
-            String line;
-            System.out.println("=========dir=========");
-            while ((line = reader.readLine()) != null) {
-                System.out.println(line);
-            }
-            System.out.println("=========dir=========");
-            reader.close();
-
             int currentFileCount = 0;
             for (AbstractFile mp4File : mp4Files) {
                 progressBar.progress(mp4File.getName(),currentFileCount);
                 
-                String currentCommand = windowsExifCommand + mp4File.getLocalAbsPath();
+                ProcessBuilder builder = new ProcessBuilder();
+                if (isWindows) {
+                    String currentCommand = windowsExifCommand + mp4File.getLocalAbsPath();
+                    builder.command(currentCommand);
+                } else {
+                    // todo - linux command & test
+                }
+                
+                builder.directory(new File(System.getProperty("user.home")));
+                Process process = builder.start();
+                
+                BufferedReader reader = new BufferedReader(
+                new InputStreamReader(process.getInputStream()));
+                
+                String line;
+                System.out.println("=========dir=========");
+                while ((line = reader.readLine()) != null) {
+                    System.out.println(line);
+                }
+                System.out.println("=========dir=========");
+                reader.close();
                         
                         
                 String msgText = String.format("Found %s file", mp4File.getNameExtension());
