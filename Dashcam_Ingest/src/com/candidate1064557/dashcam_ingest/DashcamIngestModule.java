@@ -18,13 +18,10 @@ import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.TskData;
 
-/**
- * Sample data source ingest module that doesn't do much. Demonstrates per
- * ingest job module settings, checking for job cancellation, updating the
- * DataSourceIngestModuleProgress object, and use of a subset of the available
- * ingest services.
- */
+
 class DashcamIngestModule implements DataSourceIngestModule {
+
+    private static final String windowsExifCommand = "exiftool.exe -p \"$gpslatitude# $gpslongitude# $gpsspeed# ${GPSDateTime;DateFmt('%s%f')}\" -ee3 ";
 
     private final boolean skipKnownFiles;
     private IngestJobContext context = null;
@@ -43,11 +40,11 @@ class DashcamIngestModule implements DataSourceIngestModule {
 
         try {
             // send msg for each file with .mp4 extension.
-            FileManager fileManager = Case.getCurrentCaseThrows().getServices().getFileManager();
+            FileManager fileManager = Case.getCurrentCaseThrows()
+                        .getServices().getFileManager();
             List<AbstractFile> mp4Files = fileManager.findFiles(dataSource, "%.mp4");
-            int numberOfMP4Files = mp4Files.size();
+            final int numberOfMP4Files = mp4Files.size();
             
-            // There's n tasks to do.
             progressBar.switchToDeterminate(numberOfMP4Files);
             
             boolean isWindows = System.getProperty("os.name")
@@ -78,6 +75,10 @@ class DashcamIngestModule implements DataSourceIngestModule {
             int currentFileCount = 0;
             for (AbstractFile mp4File : mp4Files) {
                 progressBar.progress(mp4File.getName(),currentFileCount);
+                
+                String currentCommand = windowsExifCommand + mp4File.getLocalAbsPath();
+                        
+                        
                 String msgText = String.format("Found %s file", mp4File.getNameExtension());
                 IngestMessage message = IngestMessage.createMessage(
                     IngestMessage.MessageType.DATA,
