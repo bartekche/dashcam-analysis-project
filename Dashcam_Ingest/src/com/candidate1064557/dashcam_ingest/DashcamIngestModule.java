@@ -16,15 +16,19 @@ import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.datamodel.TskData;
-
+import org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPoints;
+import org.sleuthkit.datamodel.blackboardutils.GeoArtifactsHelper;
+import org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPoints.TrackPoint;
+import java.util.ArrayList;
+import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 
 class DashcamIngestModule implements DataSourceIngestModule {
 
-    private static final String windowsExifCommand = "exiftool.exe -p \"$gpslatitude# $gpslongitude# $gpsspeed# ${GPSDateTime;DateFmt('%s%f')}\" -ee3 ";
+    private static final String windowsExifCommand = "exiftool.exe -p \"$gpslatitude#|$gpslongitude#|$gpsspeed#|${GPSDateTime;DateFmt('%s%f')}\" -ee3 ";
 
     private final boolean skipKnownFiles;
     private IngestJobContext context = null;
+    private static final String moduleName = DashcamIngestModuleFactory.getModuleName();
 
     DashcamIngestModule(DashcamIngestJobSettings settings) {
         this.skipKnownFiles = settings.skipKnownFiles();
@@ -41,19 +45,19 @@ class DashcamIngestModule implements DataSourceIngestModule {
         try {
             // send msg for each file with .mp4 extension.
             FileManager fileManager = Case.getCurrentCaseThrows()
-                        .getServices().getFileManager();
+                    .getServices().getFileManager();
             List<AbstractFile> mp4Files = fileManager.findFiles(dataSource, "%.mp4");
             final int numberOfMP4Files = mp4Files.size();
-            
+
             progressBar.switchToDeterminate(numberOfMP4Files);
-            
+
             final boolean isWindows = System.getProperty("os.name")
                     .toLowerCase().startsWith("windows");
-            
+
             int currentFileCount = 0;
             for (AbstractFile mp4File : mp4Files) {
-                progressBar.progress(mp4File.getName(),currentFileCount);
-                
+                progressBar.progress(mp4File.getName(), currentFileCount);
+
                 ProcessBuilder builder = new ProcessBuilder();
                 if (isWindows) {
                     String currentCommand = windowsExifCommand + mp4File.getLocalAbsPath();
@@ -61,50 +65,74 @@ class DashcamIngestModule implements DataSourceIngestModule {
                 } else {
                     // todo - linux command & test
                 }
-                
+
                 builder.directory(new File(System.getProperty("user.home")));
                 Process process = builder.start();
-                
+
                 BufferedReader reader = new BufferedReader(
-                new InputStreamReader(process.getInputStream()));
-                
-                String line;
+                        new InputStreamReader(process.getInputStream()));
+
+                String frameData;
+                double frameLatitude, frameLongitude, frameSpeed;
+                long frameTime;
+
                 System.out.println("=========dir=========");
-                while ((line = reader.readLine()) != null) {
-                    System.out.println(line);
+                
+                GeoTrackPoints pointList = new GeoTrackPoints();
+                
+                while ((frameData = reader.readLine()) != null) {
+                    String[] frameDataSeparated = frameData.split("\\|");
+                    try {
+                        frameLatitude = Double.parseDouble(frameDataSeparated[0]); // fix 180 180 and 0 0 points
+                        frameLongitude = Double.parseDouble(frameDataSeparated[1]);
+                        frameSpeed = Double.parseDouble(frameDataSeparated[2]);
+                        frameTime = (long) (1000 * Double.parseDouble(frameDataSeparated[3])); //fix time
+                    } catch (NumberFormatException e) {
+                        IngestServices ingestServices = IngestServices.getInstance();
+                        Logger logger = ingestServices.getLogger(DashcamIngestModuleFactory.getModuleName());
+                        logger.log(Level.WARNING, "Parsing error - skipping frame");
+                        continue;
+                    }
+
+                    TrackPoint framePoint = new TrackPoint(frameLatitude, frameLongitude, null, null, frameSpeed, null, null, frameTime);
+                    pointList.addPoint(framePoint);
+
                 }
+                
+                (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
+                        moduleName,
+                        "xd",
+                        mp4File,
+                        context.getJobId() 
+                )).addTrack(mp4File.getName(),pointList, new ArrayList<>());
+                
                 System.out.println("=========dir=========");
                 reader.close();
-                        
-                        
+
                 String msgText = String.format("Found %s file", mp4File.getNameExtension());
                 IngestMessage message = IngestMessage.createMessage(
-                    IngestMessage.MessageType.DATA,
-                    DashcamIngestModuleFactory.getModuleName(),
-                    msgText);
+                        IngestMessage.MessageType.DATA,
+                        moduleName,
+                        msgText);
                 IngestServices.getInstance().postMessage(message);
-                currentFileCount+=1;
+                currentFileCount += 1;
             }
             progressBar.progress(currentFileCount);
             return IngestModule.ProcessResult.OK;
-            
 
             // check if we were cancelled
-           // if (context.dataSourceIngestIsCancelled()) {
+            // if (context.dataSourceIngestIsCancelled()) {
             //    return IngestModule.ProcessResult.OK;
-           // }
-
-        
-
-        } catch (TskCoreException | NoCurrentCaseException ex) {
+            // }
+        } catch (TskCoreException | NoCurrentCaseException | BlackboardException ex) {
             IngestServices ingestServices = IngestServices.getInstance();
-            Logger logger = ingestServices.getLogger(DashcamIngestModuleFactory.getModuleName());
+            Logger logger = ingestServices.getLogger(moduleName);
             logger.log(Level.SEVERE, "File query failed", ex);
             return IngestModule.ProcessResult.ERROR;
-            
-        } catch (IOException ex){
+
+        } catch (IOException ex) {
             IngestServices ingestServices = IngestServices.getInstance();
-            Logger logger = ingestServices.getLogger(DashcamIngestModuleFactory.getModuleName());
+            Logger logger = ingestServices.getLogger(moduleName);
             logger.log(Level.SEVERE, "Failed command execution", ex);
             return IngestModule.ProcessResult.ERROR;
 
