@@ -10,12 +10,14 @@ public class DashcamIngestJobSettings implements IngestModuleIngestJobSettings {
 
     private static final long serialVersionUID = 1L;
     private boolean skipKnownFiles = true;
+    private boolean removeOutliers = true;
 
     DashcamIngestJobSettings() {
     }
 
-    DashcamIngestJobSettings(boolean skipKnownFiles) {
+    DashcamIngestJobSettings(boolean skipKnownFiles, boolean removeOutliers) {
         this.skipKnownFiles = skipKnownFiles;
+        this.removeOutliers = removeOutliers;
     }
 
     @Override
@@ -29,6 +31,14 @@ public class DashcamIngestJobSettings implements IngestModuleIngestJobSettings {
 
     boolean skipKnownFiles() {
         return skipKnownFiles;
+    }
+    
+    void setRemoveOutliers(boolean enabled) {
+        removeOutliers = enabled;
+    }
+
+    boolean removeOutliers() {
+        return removeOutliers;
     }
     
 }

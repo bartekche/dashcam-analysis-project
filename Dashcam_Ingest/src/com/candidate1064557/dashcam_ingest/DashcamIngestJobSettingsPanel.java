@@ -19,6 +19,7 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
 
     private void customizeComponents(DashcamIngestJobSettings settings) {
         skipKnownFilesCheckBox.setSelected(settings.skipKnownFiles());
+        removeOutliersCheckBox.setSelected(settings.removeOutliers());
     }
 
     /**
@@ -28,7 +29,7 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
      */
     @Override
     public IngestModuleIngestJobSettings getSettings() {
-        return new DashcamIngestJobSettings(skipKnownFilesCheckBox.isSelected());
+        return new DashcamIngestJobSettings(skipKnownFilesCheckBox.isSelected(), removeOutliersCheckBox.isSelected());
     }
 
     /**
@@ -41,8 +42,11 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
     private void initComponents() {
 
         skipKnownFilesCheckBox = new javax.swing.JCheckBox();
+        removeOutliersCheckBox = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(skipKnownFilesCheckBox, org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.skipKnownFilesCheckBox.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(removeOutliersCheckBox, org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.removeOutliersCheckBox.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -50,7 +54,9 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(skipKnownFilesCheckBox)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(skipKnownFilesCheckBox)
+                    .addComponent(removeOutliersCheckBox))
                 .addContainerGap(155, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -58,10 +64,13 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(skipKnownFilesCheckBox)
-                .addContainerGap(270, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(removeOutliersCheckBox)
+                .addContainerGap(244, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox removeOutliersCheckBox;
     private javax.swing.JCheckBox skipKnownFilesCheckBox;
     // End of variables declaration//GEN-END:variables
 }

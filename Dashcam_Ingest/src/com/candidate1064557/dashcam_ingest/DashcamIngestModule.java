@@ -27,11 +27,13 @@ class DashcamIngestModule implements DataSourceIngestModule {
     private static final String windowsExifCommand = "exiftool.exe -p \"$gpslatitude#|$gpslongitude#|$gpsspeed#|${GPSDateTime;DateFmt('%s%f')}\" -ee3 ";
 
     private final boolean skipKnownFiles;
+    private final boolean removeOutliers;
     private IngestJobContext context = null;
-    private static final String moduleName = DashcamIngestModuleFactory.getModuleName();
+    private final String moduleName = DashcamIngestModuleFactory.getModuleName();
 
     DashcamIngestModule(DashcamIngestJobSettings settings) {
         this.skipKnownFiles = settings.skipKnownFiles();
+        this.removeOutliers = settings.removeOutliers();
     }
 
     @Override
@@ -43,7 +45,7 @@ class DashcamIngestModule implements DataSourceIngestModule {
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
 
         try {
-            // send msg for each file with .mp4 extension.
+
             FileManager fileManager = Case.getCurrentCaseThrows()
                     .getServices().getFileManager();
             List<AbstractFile> mp4Files = fileManager.findFiles(dataSource, "%.mp4");
