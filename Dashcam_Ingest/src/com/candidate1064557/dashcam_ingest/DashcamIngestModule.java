@@ -43,6 +43,8 @@ class DashcamIngestModule implements DataSourceIngestModule {
 
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
+        IngestServices ingestServices = IngestServices.getInstance();
+        Logger logger = ingestServices.getLogger(moduleName);
 
         try {
 
@@ -58,7 +60,10 @@ class DashcamIngestModule implements DataSourceIngestModule {
 
             int currentFileCount = 0;
             for (AbstractFile mp4File : mp4Files) {
-                progressBar.progress(mp4File.getName(), currentFileCount);
+                
+                final String fileName = mp4File.getName();
+                
+                progressBar.progress(fileName, currentFileCount);
 
                 ProcessBuilder builder = new ProcessBuilder();
                 if (isWindows) {
@@ -81,13 +86,11 @@ class DashcamIngestModule implements DataSourceIngestModule {
                     while ((frameData = reader.readLine()) != null) {
                         String[] frameDataSeparated = frameData.split("\\|");
                         try {
-                            frameLatitude = Double.parseDouble(frameDataSeparated[0]); // fix 180 180 and 0 0 points
+                            frameLatitude = Double.parseDouble(frameDataSeparated[0]); 
                             frameLongitude = Double.parseDouble(frameDataSeparated[1]);
                             frameSpeed = Double.parseDouble(frameDataSeparated[2]);
-                            frameTime = (long)(Double.parseDouble(frameDataSeparated[3])); //fix time
+                            frameTime = (long)(Double.parseDouble(frameDataSeparated[3])); 
                         } catch (NumberFormatException e) {
-                            IngestServices ingestServices = IngestServices.getInstance();
-                            Logger logger = ingestServices.getLogger(DashcamIngestModuleFactory.getModuleName());
                             logger.log(Level.WARNING, "Parsing error - skipping frame");
                             continue;
                         }
@@ -98,6 +101,15 @@ class DashcamIngestModule implements DataSourceIngestModule {
                     }
 
                 }
+                if(pointList.isEmpty()){
+                    String msgText = String.format("No track found in %s", fileName);
+                    IngestMessage message = IngestMessage.createMessage(
+                        IngestMessage.MessageType.WARNING,
+                        moduleName,
+                        msgText);
+                    IngestServices.getInstance().postMessage(message);
+                    continue;
+                }
 
                 (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
                         moduleName,
@@ -106,14 +118,7 @@ class DashcamIngestModule implements DataSourceIngestModule {
                         context.getJobId()
                 )).addTrack(mp4File.getName(), pointList, new ArrayList<>());
 
-                System.out.println("=========dir=========");
 
-                String msgText = String.format("Found %s file", mp4File.getNameExtension());
-                IngestMessage message = IngestMessage.createMessage(
-                        IngestMessage.MessageType.DATA,
-                        moduleName,
-                        msgText);
-                IngestServices.getInstance().postMessage(message);
                 currentFileCount += 1;
 
                 // check if we were cancelled
@@ -126,14 +131,10 @@ class DashcamIngestModule implements DataSourceIngestModule {
             return IngestModule.ProcessResult.OK;
 
         } catch (TskCoreException | NoCurrentCaseException | BlackboardException ex) {
-            IngestServices ingestServices = IngestServices.getInstance();
-            Logger logger = ingestServices.getLogger(moduleName);
             logger.log(Level.SEVERE, "File query failed", ex);
             return IngestModule.ProcessResult.ERROR;
 
         } catch (IOException ex) {
-            IngestServices ingestServices = IngestServices.getInstance();
-            Logger logger = ingestServices.getLogger(moduleName);
             logger.log(Level.SEVERE, "Failed command execution", ex);
             return IngestModule.ProcessResult.ERROR;
 
