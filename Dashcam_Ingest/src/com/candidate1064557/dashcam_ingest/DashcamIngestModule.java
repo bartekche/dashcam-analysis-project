@@ -25,15 +25,19 @@ import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 class DashcamIngestModule implements DataSourceIngestModule {
 
     private final String windowsExifCommand = "exiftool.exe -p \"$gpslatitude#|$gpslongitude#|$gpsspeed#|${GPSDateTime;DateFmt('%s%f')}\" -ee3 ";
-
     private final boolean skipKnownFiles;
     private final boolean removeOutliers;
+    private final boolean analyseMp4;
+    private final boolean analyseMov;
     private IngestJobContext context = null;
     private final String moduleName = DashcamIngestModuleFactory.getModuleName();
+    private final Logger logger = IngestServices.getInstance().getLogger(moduleName);
 
     DashcamIngestModule(DashcamIngestJobSettings settings) {
         this.skipKnownFiles = settings.skipKnownFiles();
         this.removeOutliers = settings.removeOutliers();
+        this.analyseMp4 = settings.analyseMp4();
+        this.analyseMov = settings.analyseMov();
     }
 
     @Override
@@ -43,31 +47,36 @@ class DashcamIngestModule implements DataSourceIngestModule {
 
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
-        IngestServices ingestServices = IngestServices.getInstance();
-        Logger logger = ingestServices.getLogger(moduleName);
 
         try {
-
             FileManager fileManager = Case.getCurrentCaseThrows()
                     .getServices().getFileManager();
-            List<AbstractFile> mp4Files = fileManager.findFiles(dataSource, "%.mp4");
-            final int numberOfMP4Files = mp4Files.size();
-
-            progressBar.switchToDeterminate(numberOfMP4Files);
+            List<AbstractFile> fileList = new ArrayList<>();
+            if(analyseMp4){
+                List<AbstractFile> mp4FileList = fileManager.findFiles(dataSource, "%.mp4");
+                fileList.addAll(mp4FileList);
+            }
+            if(analyseMov){
+                List<AbstractFile> movFileList = fileManager.findFiles(dataSource, "%.mov");
+                fileList.addAll(movFileList);
+            }
+            
+            final int numberOfFiles = fileList.size();
+            progressBar.switchToDeterminate(numberOfFiles);
 
             final boolean isWindows = System.getProperty("os.name")
                     .toLowerCase().startsWith("windows");
 
             int currentFileCount = 0;
-            for (AbstractFile mp4File : mp4Files) {
-                
-                final String fileName = mp4File.getName();
-                
+            for (AbstractFile currentFile : fileList) {
+
+                final String fileName = currentFile.getName();
+
                 progressBar.progress(fileName, currentFileCount);
 
                 ProcessBuilder builder = new ProcessBuilder();
                 if (isWindows) {
-                    String currentCommand = windowsExifCommand + mp4File.getLocalAbsPath();
+                    String currentCommand = windowsExifCommand + currentFile.getLocalAbsPath();
                     builder.command(currentCommand);
                 } else {
                     // todo - linux command & test
@@ -86,10 +95,10 @@ class DashcamIngestModule implements DataSourceIngestModule {
                     while ((frameData = reader.readLine()) != null) {
                         String[] frameDataSeparated = frameData.split("\\|");
                         try {
-                            frameLatitude = Double.parseDouble(frameDataSeparated[0]); 
+                            frameLatitude = Double.parseDouble(frameDataSeparated[0]);
                             frameLongitude = Double.parseDouble(frameDataSeparated[1]);
                             frameSpeed = Double.parseDouble(frameDataSeparated[2]);
-                            frameTime = (long)(Double.parseDouble(frameDataSeparated[3])); 
+                            frameTime = (long) (Double.parseDouble(frameDataSeparated[3]));
                         } catch (NumberFormatException e) {
                             logger.log(Level.WARNING, "Parsing error - skipping frame");
                             continue;
@@ -101,12 +110,12 @@ class DashcamIngestModule implements DataSourceIngestModule {
                     }
 
                 }
-                if(pointList.isEmpty()){
+                if (pointList.isEmpty()) {
                     String msgText = String.format("No track found in %s", fileName);
                     IngestMessage message = IngestMessage.createMessage(
-                        IngestMessage.MessageType.WARNING,
-                        moduleName,
-                        msgText);
+                            IngestMessage.MessageType.WARNING,
+                            moduleName,
+                            msgText);
                     IngestServices.getInstance().postMessage(message);
                     continue;
                 }
@@ -114,10 +123,9 @@ class DashcamIngestModule implements DataSourceIngestModule {
                 (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
                         moduleName,
                         "xd",
-                        mp4File,
+                        currentFile,
                         context.getJobId()
-                )).addTrack(mp4File.getName(), pointList, new ArrayList<>());
-
+                )).addTrack(currentFile.getName(), pointList, new ArrayList<>());
 
                 currentFileCount += 1;
 
@@ -127,7 +135,7 @@ class DashcamIngestModule implements DataSourceIngestModule {
                 }
 
             }
-            progressBar.progress(currentFileCount);
+            progressBar.progress(numberOfFiles);
             return IngestModule.ProcessResult.OK;
 
         } catch (TskCoreException | NoCurrentCaseException | BlackboardException ex) {

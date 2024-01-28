@@ -20,6 +20,8 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
     private void customizeComponents(DashcamIngestJobSettings settings) {
         skipKnownFilesCheckBox.setSelected(settings.skipKnownFiles());
         removeOutliersCheckBox.setSelected(settings.removeOutliers());
+        mp4CheckBox.setSelected(settings.analyseMp4());
+        movCheckBox.setSelected(settings.analyseMov());
     }
 
     /**
@@ -29,7 +31,10 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
      */
     @Override
     public IngestModuleIngestJobSettings getSettings() {
-        return new DashcamIngestJobSettings(skipKnownFilesCheckBox.isSelected(), removeOutliersCheckBox.isSelected());
+        return new DashcamIngestJobSettings(skipKnownFilesCheckBox.isSelected(),
+                                            removeOutliersCheckBox.isSelected(), 
+                                            mp4CheckBox.isSelected(),
+                                            movCheckBox.isSelected());
     }
 
     /**
@@ -43,10 +48,24 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
 
         skipKnownFilesCheckBox = new javax.swing.JCheckBox();
         removeOutliersCheckBox = new javax.swing.JCheckBox();
+        jLabel1 = new javax.swing.JLabel();
+        mp4CheckBox = new javax.swing.JCheckBox();
+        movCheckBox = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(skipKnownFilesCheckBox, org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.skipKnownFilesCheckBox.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(removeOutliersCheckBox, org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.removeOutliersCheckBox.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.jLabel1.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(mp4CheckBox, org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.mp4CheckBox.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(movCheckBox, org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.movCheckBox.text")); // NOI18N
+        movCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                movCheckBoxActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -55,8 +74,11 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 138, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(skipKnownFilesCheckBox)
-                    .addComponent(removeOutliersCheckBox))
+                    .addComponent(removeOutliersCheckBox)
+                    .addComponent(mp4CheckBox)
+                    .addComponent(movCheckBox))
                 .addContainerGap(155, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -66,10 +88,24 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
                 .addComponent(skipKnownFilesCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(removeOutliersCheckBox)
-                .addContainerGap(244, Short.MAX_VALUE))
+                .addGap(30, 30, 30)
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(mp4CheckBox)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(movCheckBox)
+                .addContainerGap(146, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void movCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_movCheckBoxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_movCheckBoxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JCheckBox movCheckBox;
+    private javax.swing.JCheckBox mp4CheckBox;
     private javax.swing.JCheckBox removeOutliersCheckBox;
     private javax.swing.JCheckBox skipKnownFilesCheckBox;
     // End of variables declaration//GEN-END:variables
