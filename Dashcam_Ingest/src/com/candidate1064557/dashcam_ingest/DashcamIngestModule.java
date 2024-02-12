@@ -1,26 +1,27 @@
 package com.candidate1064557.dashcam_ingest;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
-import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
-import org.sleuthkit.autopsy.ingest.IngestModule;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
+import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPoints;
-import org.sleuthkit.datamodel.blackboardutils.GeoArtifactsHelper;
-import org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPoints.TrackPoint;
-import java.util.ArrayList;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard.BlackboardException;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.blackboardutils.GeoArtifactsHelper;
+import org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPoints;
+import org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPoints.TrackPoint;
 
 class DashcamIngestModule implements DataSourceIngestModule {
 
@@ -30,6 +31,7 @@ class DashcamIngestModule implements DataSourceIngestModule {
     private final boolean analyseMp4;
     private final boolean analyseMov;
     private IngestJobContext context = null;
+    private final boolean isWindows;
     private final String moduleName = DashcamIngestModuleFactory.getModuleName();
     private final Logger logger = IngestServices.getInstance().getLogger(moduleName);
 
@@ -38,6 +40,8 @@ class DashcamIngestModule implements DataSourceIngestModule {
         this.removeOutliers = settings.removeOutliers();
         this.analyseMp4 = settings.analyseMp4();
         this.analyseMov = settings.analyseMov();
+        this.isWindows = System.getProperty("os.name")
+                .toLowerCase().startsWith("windows");
     }
 
     @Override
@@ -49,23 +53,28 @@ class DashcamIngestModule implements DataSourceIngestModule {
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
 
         try {
+            if (!isWindows) {
+                // todo - linux command & test
+                org.sleuthkit.autopsy.coreutils.MessageNotifyUtil.Notify
+                        .show("DashcamIngest", "Linux not supported", MessageNotifyUtil.MessageType.ERROR);
+                logger.log(Level.SEVERE, "Dashcam ingest for linux not supported");
+                return IngestModule.ProcessResult.ERROR;
+            }
+
             FileManager fileManager = Case.getCurrentCaseThrows()
                     .getServices().getFileManager();
             List<AbstractFile> fileList = new ArrayList<>();
-            if(analyseMp4){
+            if (analyseMp4) {
                 List<AbstractFile> mp4FileList = fileManager.findFiles(dataSource, "%.mp4");
                 fileList.addAll(mp4FileList);
             }
-            if(analyseMov){
+            if (analyseMov) {
                 List<AbstractFile> movFileList = fileManager.findFiles(dataSource, "%.mov");
                 fileList.addAll(movFileList);
             }
-            
+
             final int numberOfFiles = fileList.size();
             progressBar.switchToDeterminate(numberOfFiles);
-
-            final boolean isWindows = System.getProperty("os.name")
-                    .toLowerCase().startsWith("windows");
 
             int currentFileCount = 0;
             for (AbstractFile currentFile : fileList) {
@@ -122,7 +131,7 @@ class DashcamIngestModule implements DataSourceIngestModule {
 
                 (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
                         moduleName,
-                        "xd",
+                        "Dashcam Ingest",
                         currentFile,
                         context.getJobId()
                 )).addTrack(currentFile.getName(), pointList, new ArrayList<>());
