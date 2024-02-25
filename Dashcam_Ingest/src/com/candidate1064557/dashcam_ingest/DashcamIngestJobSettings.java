@@ -9,7 +9,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 public class DashcamIngestJobSettings implements IngestModuleIngestJobSettings {
 
     private static final long serialVersionUID = 1L;
-    private boolean skipKnownFiles = true;
+    private boolean useCalculatedSpeed = true;
     private boolean removeOutliers = true;
     private boolean analyseMov = true;
     private boolean analyseMp4 = true;
@@ -17,8 +17,8 @@ public class DashcamIngestJobSettings implements IngestModuleIngestJobSettings {
     DashcamIngestJobSettings() {
     }
 
-    DashcamIngestJobSettings(boolean skipKnownFiles, boolean removeOutliers, boolean analyseMp4, boolean analyseMov) {
-        this.skipKnownFiles = skipKnownFiles;
+    DashcamIngestJobSettings(boolean useCalculatedSpeed, boolean removeOutliers, boolean analyseMp4, boolean analyseMov) {
+        this.useCalculatedSpeed = useCalculatedSpeed;
         this.removeOutliers = removeOutliers;
         this.analyseMp4 = analyseMp4;
         this.analyseMov = analyseMov;
@@ -29,12 +29,12 @@ public class DashcamIngestJobSettings implements IngestModuleIngestJobSettings {
         return serialVersionUID;
     }
 
-    void setSkipKnownFiles(boolean enabled) {
-        skipKnownFiles = enabled;
+    void setUseCalculatedSpeed(boolean enabled) {
+        useCalculatedSpeed = enabled;
     }
 
-    boolean skipKnownFiles() {
-        return skipKnownFiles;
+    boolean useCalculatedSpeed() {
+        return useCalculatedSpeed;
     }
     
     void setRemoveOutliers(boolean enabled) {

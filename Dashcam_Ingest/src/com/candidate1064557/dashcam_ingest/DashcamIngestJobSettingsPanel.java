@@ -18,7 +18,7 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
     }
 
     private void customizeComponents(DashcamIngestJobSettings settings) {
-        skipKnownFilesCheckBox.setSelected(settings.skipKnownFiles());
+        useCalculatedSpeedCheckBox.setSelected(settings.useCalculatedSpeed());
         removeOutliersCheckBox.setSelected(settings.removeOutliers());
         mp4CheckBox.setSelected(settings.analyseMp4());
         movCheckBox.setSelected(settings.analyseMov());
@@ -31,7 +31,7 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
      */
     @Override
     public IngestModuleIngestJobSettings getSettings() {
-        return new DashcamIngestJobSettings(skipKnownFilesCheckBox.isSelected(),
+        return new DashcamIngestJobSettings(useCalculatedSpeedCheckBox.isSelected(),
                                             removeOutliersCheckBox.isSelected(), 
                                             mp4CheckBox.isSelected(),
                                             movCheckBox.isSelected());
@@ -46,15 +46,17 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        skipKnownFilesCheckBox = new javax.swing.JCheckBox();
+        useCalculatedSpeedCheckBox = new javax.swing.JCheckBox();
         removeOutliersCheckBox = new javax.swing.JCheckBox();
         jLabel1 = new javax.swing.JLabel();
         mp4CheckBox = new javax.swing.JCheckBox();
         movCheckBox = new javax.swing.JCheckBox();
 
-        org.openide.awt.Mnemonics.setLocalizedText(skipKnownFilesCheckBox, org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.skipKnownFilesCheckBox.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(useCalculatedSpeedCheckBox, org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.useCalculatedSpeedCheckBox.text")); // NOI18N
+        useCalculatedSpeedCheckBox.setToolTipText(org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.useCalculatedSpeedCheckBox.toolTipText")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(removeOutliersCheckBox, org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.removeOutliersCheckBox.text")); // NOI18N
+        removeOutliersCheckBox.setActionCommand(org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.removeOutliersCheckBox.actionCommand")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.jLabel1.text")); // NOI18N
 
@@ -75,17 +77,17 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 138, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(skipKnownFilesCheckBox)
+                    .addComponent(useCalculatedSpeedCheckBox)
                     .addComponent(removeOutliersCheckBox)
                     .addComponent(mp4CheckBox)
                     .addComponent(movCheckBox))
-                .addContainerGap(155, Short.MAX_VALUE))
+                .addContainerGap(167, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(skipKnownFilesCheckBox)
+                .addComponent(useCalculatedSpeedCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(removeOutliersCheckBox)
                 .addGap(30, 30, 30)
@@ -96,6 +98,8 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
                 .addComponent(movCheckBox)
                 .addContainerGap(146, Short.MAX_VALUE))
         );
+
+        useCalculatedSpeedCheckBox.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.useCalculatedSpeedCheckBox.AccessibleContext.accessibleName")); // NOI18N
     }// </editor-fold>//GEN-END:initComponents
 
     private void movCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_movCheckBoxActionPerformed
@@ -107,6 +111,6 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
     private javax.swing.JCheckBox movCheckBox;
     private javax.swing.JCheckBox mp4CheckBox;
     private javax.swing.JCheckBox removeOutliersCheckBox;
-    private javax.swing.JCheckBox skipKnownFilesCheckBox;
+    private javax.swing.JCheckBox useCalculatedSpeedCheckBox;
     // End of variables declaration//GEN-END:variables
 }

@@ -20,12 +20,12 @@
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="jLabel1" min="-2" pref="138" max="-2" attributes="0"/>
-                  <Component id="skipKnownFilesCheckBox" min="-2" max="-2" attributes="0"/>
+                  <Component id="useCalculatedSpeedCheckBox" min="-2" max="-2" attributes="0"/>
                   <Component id="removeOutliersCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Component id="mp4CheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Component id="movCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace pref="155" max="32767" attributes="0"/>
+              <EmptySpace pref="167" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -33,7 +33,7 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="skipKnownFilesCheckBox" min="-2" max="-2" attributes="0"/>
+              <Component id="useCalculatedSpeedCheckBox" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="removeOutliersCheckBox" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="30" max="-2" attributes="0"/>
@@ -48,17 +48,28 @@
     </DimensionLayout>
   </Layout>
   <SubComponents>
-    <Component class="javax.swing.JCheckBox" name="skipKnownFilesCheckBox">
+    <Component class="javax.swing.JCheckBox" name="useCalculatedSpeedCheckBox">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="com/candidate1064557/dashcam_ingest/Bundle.properties" key="DashcamIngestJobSettingsPanel.skipKnownFilesCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="com/candidate1064557/dashcam_ingest/Bundle.properties" key="DashcamIngestJobSettingsPanel.useCalculatedSpeedCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="com/candidate1064557/dashcam_ingest/Bundle.properties" key="DashcamIngestJobSettingsPanel.useCalculatedSpeedCheckBox.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+      <AccessibilityProperties>
+        <Property name="AccessibleContext.accessibleName" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="com/candidate1064557/dashcam_ingest/Bundle.properties" key="DashcamIngestJobSettingsPanel.useCalculatedSpeedCheckBox.AccessibleContext.accessibleName" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </AccessibilityProperties>
     </Component>
     <Component class="javax.swing.JCheckBox" name="removeOutliersCheckBox">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="com/candidate1064557/dashcam_ingest/Bundle.properties" key="DashcamIngestJobSettingsPanel.removeOutliersCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+        <Property name="actionCommand" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="com/candidate1064557/dashcam_ingest/Bundle.properties" key="DashcamIngestJobSettingsPanel.removeOutliersCheckBox.actionCommand" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
