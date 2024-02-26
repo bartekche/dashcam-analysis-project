@@ -292,7 +292,7 @@ public class DashcamIngestModuleFactory implements IngestModuleFactory {
      */
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
-          throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException();
     }
 
 }

@@ -65,6 +65,7 @@ class DashcamIngestModule implements DataSourceIngestModule {
             FileManager fileManager = Case.getCurrentCaseThrows()
                     .getServices().getFileManager();
             List<AbstractFile> fileList = new ArrayList<>();
+            
             if (analyseMp4) {
                 List<AbstractFile> mp4FileList = fileManager.findFiles(dataSource, "%.mp4");
                 fileList.addAll(mp4FileList);

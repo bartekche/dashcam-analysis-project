@@ -1,4 +1,3 @@
-
 package com.candidate1064557.dashcam_ingest;
 
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
@@ -36,7 +35,7 @@ public class DashcamIngestJobSettings implements IngestModuleIngestJobSettings {
     boolean useCalculatedSpeed() {
         return useCalculatedSpeed;
     }
-    
+
     void setRemoveOutliers(boolean enabled) {
         removeOutliers = enabled;
     }
@@ -44,6 +43,7 @@ public class DashcamIngestJobSettings implements IngestModuleIngestJobSettings {
     boolean removeOutliers() {
         return removeOutliers;
     }
+
     void setAnalyseMov(boolean enabled) {
         analyseMov = enabled;
     }
@@ -51,6 +51,7 @@ public class DashcamIngestJobSettings implements IngestModuleIngestJobSettings {
     boolean analyseMov() {
         return analyseMov;
     }
+
     void setAnalyseMp4(boolean enabled) {
         analyseMp4 = enabled;
     }
@@ -58,5 +59,5 @@ public class DashcamIngestJobSettings implements IngestModuleIngestJobSettings {
     boolean analyseMp4() {
         return analyseMp4;
     }
-    
+
 }
