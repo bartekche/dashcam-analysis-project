@@ -12,15 +12,18 @@ public class DashcamIngestJobSettings implements IngestModuleIngestJobSettings {
     private boolean removeOutliers = true;
     private boolean analyseMov = true;
     private boolean analyseMp4 = true;
+    private boolean geofence = true;
 
     DashcamIngestJobSettings() {
     }
 
-    DashcamIngestJobSettings(boolean useCalculatedSpeed, boolean removeOutliers, boolean analyseMp4, boolean analyseMov) {
+    DashcamIngestJobSettings(boolean useCalculatedSpeed, boolean removeOutliers, boolean analyseMp4, boolean analyseMov, boolean geofence) {
         this.useCalculatedSpeed = useCalculatedSpeed;
         this.removeOutliers = removeOutliers;
         this.analyseMp4 = analyseMp4;
         this.analyseMov = analyseMov;
+        this.geofence = geofence;
+        
     }
 
     @Override
@@ -58,6 +61,14 @@ public class DashcamIngestJobSettings implements IngestModuleIngestJobSettings {
 
     boolean analyseMp4() {
         return analyseMp4;
+    }
+    
+    void setGeofence(boolean enabled) {
+        geofence = enabled;
+    }
+
+    boolean geofence() {
+        return geofence;
     }
 
 }

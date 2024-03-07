@@ -30,6 +30,7 @@ class DashcamIngestModule implements DataSourceIngestModule {
     private final boolean removeOutliers;
     private final boolean analyseMp4;
     private final boolean analyseMov;
+    private final boolean geofence;
     private IngestJobContext context = null;
     private final boolean isWindows;
     private final String moduleName = DashcamIngestModuleFactory.getModuleName();
@@ -41,6 +42,7 @@ class DashcamIngestModule implements DataSourceIngestModule {
         this.removeOutliers = settings.removeOutliers();
         this.analyseMp4 = settings.analyseMp4();
         this.analyseMov = settings.analyseMov();
+        this.geofence = settings.geofence();
         this.isWindows = System.getProperty("os.name")
                 .toLowerCase().startsWith("windows");
     }
