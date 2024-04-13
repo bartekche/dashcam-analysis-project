@@ -18,6 +18,12 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
     }
 
     private void customizeComponents(DashcamIngestJobSettings settings) {
+        latitudeField.setColumns(8);
+        longitudeField.setColumns(8);
+        radiusField.setColumns(5);
+        latitudeField.setText(settings.latitudeGeofence());
+        longitudeField.setText(settings.longitudeGeofence());
+        radiusField.setText(settings.radiusGeofence());
         useCalculatedSpeedCheckBox.setSelected(settings.useCalculatedSpeed());
         removeOutliersCheckBox.setSelected(settings.removeOutliers());
         mp4CheckBox.setSelected(settings.analyseMp4());
@@ -42,7 +48,10 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
                                             removeOutliersCheckBox.isSelected(), 
                                             mp4CheckBox.isSelected(),
                                             movCheckBox.isSelected(),
-                                            enableGeofencingCheckBox.isSelected());
+                                            enableGeofencingCheckBox.isSelected(),
+                                            longitudeField.getText(),
+                                            latitudeField.getText(),
+                                            radiusField.getText());
     }
 
     /**

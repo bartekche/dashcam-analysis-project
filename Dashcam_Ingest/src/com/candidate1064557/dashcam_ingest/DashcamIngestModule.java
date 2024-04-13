@@ -31,6 +31,9 @@ class DashcamIngestModule implements DataSourceIngestModule {
     private final boolean analyseMp4;
     private final boolean analyseMov;
     private final boolean geofence;
+    private final String latitudeGeofenceText;
+    private final String longitudeGeofenceText;
+    private final String radiusGeofenceText;
     private IngestJobContext context = null;
     private final boolean isWindows;
     private final String moduleName = DashcamIngestModuleFactory.getModuleName();
@@ -43,6 +46,9 @@ class DashcamIngestModule implements DataSourceIngestModule {
         this.analyseMp4 = settings.analyseMp4();
         this.analyseMov = settings.analyseMov();
         this.geofence = settings.geofence();
+        this.latitudeGeofenceText = settings.latitudeGeofence();
+        this.longitudeGeofenceText = settings.longitudeGeofence();
+        this.radiusGeofenceText = settings.radiusGeofence();
         this.isWindows = System.getProperty("os.name")
                 .toLowerCase().startsWith("windows");
     }
@@ -54,7 +60,9 @@ class DashcamIngestModule implements DataSourceIngestModule {
 
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
-
+        //System.out.println(latitudeGeofenceText);
+        //System.out.println(longitudeGeofenceText);
+        //System.out.println(radiusGeofenceText);
         try {
             if (!isWindows) {
                 // todo - linux command & test
