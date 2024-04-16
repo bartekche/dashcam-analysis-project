@@ -33,11 +33,19 @@ public class DashcamUtilities {
 
     }
 
-    public static boolean isValid(double x, double y) {
+    // Check whether coordinate is a valid location AND not a special null value (like (0,0) or (180,0))
+    public static boolean isValidTrackCoordinate(double x, double y) {
         double xAbs = Math.abs(x);
         double yAbs = Math.abs(y);
         boolean xInvalidRange = xAbs >= (180.0 - eps) || xAbs <= eps;
         boolean yInvalidRange = yAbs >= (90.0 - eps) || yAbs <= eps;
-        return !(xInvalidRange && yInvalidRange);
+        return isCoordinateInBounds(xAbs, yAbs) && !(xInvalidRange && yInvalidRange);
+    }
+
+    // Check whether coordinate pair is a valid location
+    public static boolean isCoordinateInBounds(double x, double y) {
+        double xAbs = Math.abs(x);
+        double yAbs = Math.abs(y);
+        return xAbs <= 180.0 && yAbs <= 90.0;
     }
 }

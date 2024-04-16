@@ -30,22 +30,24 @@ class DashcamIngestModule implements DataSourceIngestModule {
     private final boolean removeOutliers;
     private final boolean analyseMp4;
     private final boolean analyseMov;
-    private final boolean geofence;
+    private boolean isGeofenceEnabled;
     private final String latitudeGeofenceText;
     private final String longitudeGeofenceText;
     private final String radiusGeofenceText;
+    private String msgText;
     private IngestJobContext context = null;
     private final boolean isWindows;
     private final String moduleName = DashcamIngestModuleFactory.getModuleName();
     private final Logger logger = IngestServices.getInstance().getLogger(moduleName);
     private final double distanceThreshold = 300;
+    private double latitudeGeofence, longitudeGeofence, radiusGeofence;
 
     DashcamIngestModule(DashcamIngestJobSettings settings) {
         this.useCalculatedSpeed = settings.useCalculatedSpeed();
         this.removeOutliers = settings.removeOutliers();
         this.analyseMp4 = settings.analyseMp4();
         this.analyseMov = settings.analyseMov();
-        this.geofence = settings.geofence();
+        this.isGeofenceEnabled = settings.geofence();
         this.latitudeGeofenceText = settings.latitudeGeofence();
         this.longitudeGeofenceText = settings.longitudeGeofence();
         this.radiusGeofenceText = settings.radiusGeofence();
@@ -58,12 +60,39 @@ class DashcamIngestModule implements DataSourceIngestModule {
         this.context = context;
     }
 
+    private void sendMsg(String msgText, IngestMessage.MessageType severity) {
+        IngestMessage message = IngestMessage.createMessage(
+                severity,
+                moduleName,
+                msgText);
+        IngestServices.getInstance().postMessage(message);
+
+    }
+
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
-        //System.out.println(latitudeGeofenceText);
-        //System.out.println(longitudeGeofenceText);
-        //System.out.println(radiusGeofenceText);
         try {
+            if (isGeofenceEnabled) {
+                try {
+                    latitudeGeofence = Double.parseDouble(latitudeGeofenceText);
+                    longitudeGeofence = Double.parseDouble(longitudeGeofenceText);
+                    radiusGeofence = Double.parseDouble(radiusGeofenceText);
+                } catch (NumberFormatException ex) {
+                    logger.log(Level.WARNING, "Geofence coordinate parse failed - skipping", ex);
+                    sendMsg("Geofence coordinate parse failed - skipping", IngestMessage.MessageType.WARNING);
+                    isGeofenceEnabled = false;
+                }
+                if (DashcamUtilities.isCoordinateInBounds(longitudeGeofence, latitudeGeofence)) {
+                    System.out.println(latitudeGeofence);
+                    System.out.println(longitudeGeofence);
+                    System.out.println(radiusGeofence);
+                } else {
+                    logger.log(Level.WARNING, "Geofence coordinate out of bounds - skipping");
+                    sendMsg("Geofence coordinate out of bounds - skipping", IngestMessage.MessageType.WARNING);
+                    isGeofenceEnabled = false;
+                }
+            }
+
             if (!isWindows) {
                 // todo - linux command & test
                 org.sleuthkit.autopsy.coreutils.MessageNotifyUtil.Notify
@@ -75,7 +104,7 @@ class DashcamIngestModule implements DataSourceIngestModule {
             FileManager fileManager = Case.getCurrentCaseThrows()
                     .getServices().getFileManager();
             List<AbstractFile> fileList = new ArrayList<>();
-            
+
             if (analyseMp4) {
                 List<AbstractFile> mp4FileList = fileManager.findFiles(dataSource, "%.mp4");
                 fileList.addAll(mp4FileList);
@@ -113,13 +142,12 @@ class DashcamIngestModule implements DataSourceIngestModule {
                 long lastFrameTime = 0;
                 long frameTime;
                 boolean removedOutliers = false;
-                String msgText;
                 GeoTrackPoints pointList = new GeoTrackPoints();
 
                 try (BufferedReader reader = new BufferedReader(
                         new InputStreamReader(process.getInputStream()))) {
                     while ((frameData = reader.readLine()) != null) {
-                        
+
                         //Reading data for a single waypoint:
                         String[] frameDataSeparated = frameData.split("\\|");
                         try {
@@ -131,28 +159,27 @@ class DashcamIngestModule implements DataSourceIngestModule {
                             logger.log(Level.WARNING, "Parsing error - skipping frame");
                             continue;
                         }
-                        
+
                         //Additional checks for first point added, skip distance calculations in that case
                         if (pointList.isEmpty()) {
-                            if (!removeOutliers || DashcamUtilities.isValid(frameLongitude, frameLatitude)) {
+                            if (!removeOutliers || DashcamUtilities.isValidTrackCoordinate(frameLongitude, frameLatitude)) {
                                 TrackPoint framePoint
                                         = new TrackPoint(frameLatitude, frameLongitude, null, null, metadataSpeed, null, null, frameTime);
                                 pointList.addPoint(framePoint);
                                 lastFrameLongitude = frameLongitude;
                                 lastFrameLatitude = frameLatitude;
                                 lastFrameTime = frameTime;
-                            }
-                            else if(removeOutliers && !DashcamUtilities.isValid(frameLongitude, frameLatitude)){
+                            } else if (removeOutliers && !DashcamUtilities.isValidTrackCoordinate(frameLongitude, frameLatitude)) {
                                 removedOutliers = true;
                             }
                             continue;
                         }
-                        
+
                         //Calculate distance
                         calculatedDistance
                                 = DashcamUtilities.getHaversineDistance(frameLongitude, frameLatitude, lastFrameLongitude, lastFrameLatitude);
                         accumulatedDistance += calculatedDistance;
-                        
+
                         //Calculate speed if time increased (only once per second)
                         if (frameTime != lastFrameTime) {
                             calculatedSpeed = 3.6 * accumulatedDistance / (frameTime - lastFrameTime);
@@ -177,23 +204,14 @@ class DashcamIngestModule implements DataSourceIngestModule {
                     }
                 }
                 if (pointList.isEmpty()) {
-                    msgText = String.format("No track found in %s", fileName);
-                    IngestMessage message = IngestMessage.createMessage(
-                            IngestMessage.MessageType.WARNING,
-                            moduleName,
-                            msgText);
-                    IngestServices.getInstance().postMessage(message);
+                    sendMsg(String.format("No track found in %s", fileName), IngestMessage.MessageType.WARNING);
                     continue;
                 }
                 if (removeOutliers) {
                     msgText = removedOutliers
                             ? String.format("Removed outliers in %s", fileName)
                             : String.format("No outliers found in %s", fileName);
-                    IngestMessage message = IngestMessage.createMessage(
-                            IngestMessage.MessageType.INFO,
-                            moduleName,
-                            msgText);
-                    IngestServices.getInstance().postMessage(message);
+                    sendMsg(msgText, IngestMessage.MessageType.INFO);
                 }
 
                 (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
