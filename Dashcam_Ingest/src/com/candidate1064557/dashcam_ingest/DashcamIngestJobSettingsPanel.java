@@ -49,8 +49,8 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
                                             mp4CheckBox.isSelected(),
                                             movCheckBox.isSelected(),
                                             enableGeofencingCheckBox.isSelected(),
-                                            longitudeField.getText(),
                                             latitudeField.getText(),
+                                            longitudeField.getText(),
                                             radiusField.getText());
     }
 

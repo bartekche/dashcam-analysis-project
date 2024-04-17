@@ -21,6 +21,8 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.blackboardutils.GeoArtifactsHelper;
 import org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPoints;
+import org.sleuthkit.datamodel.blackboardutils.attributes.GeoWaypoints;
+import org.sleuthkit.datamodel.blackboardutils.attributes.GeoWaypoints.Waypoint;
 import org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPoints.TrackPoint;
 
 class DashcamIngestModule implements DataSourceIngestModule {
@@ -82,11 +84,7 @@ class DashcamIngestModule implements DataSourceIngestModule {
                     sendMsg("Geofence coordinate parse failed - skipping", IngestMessage.MessageType.WARNING);
                     isGeofenceEnabled = false;
                 }
-                if (DashcamUtilities.isCoordinateInBounds(longitudeGeofence, latitudeGeofence)) {
-                    System.out.println(latitudeGeofence);
-                    System.out.println(longitudeGeofence);
-                    System.out.println(radiusGeofence);
-                } else {
+                if (!DashcamUtilities.isCoordinateInBounds(longitudeGeofence, latitudeGeofence)) {
                     logger.log(Level.WARNING, "Geofence coordinate out of bounds - skipping");
                     sendMsg("Geofence coordinate out of bounds - skipping", IngestMessage.MessageType.WARNING);
                     isGeofenceEnabled = false;
@@ -112,6 +110,18 @@ class DashcamIngestModule implements DataSourceIngestModule {
             if (analyseMov) {
                 List<AbstractFile> movFileList = fileManager.findFiles(dataSource, "%.mov");
                 fileList.addAll(movFileList);
+            }
+
+            if (isGeofenceEnabled) {
+                GeoWaypoints geofenceList = new GeoWaypoints();
+                Waypoint geofencePoint = new Waypoint(latitudeGeofence, longitudeGeofence, null, null);
+                geofenceList.addPoint(geofencePoint);
+                (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
+                        moduleName,
+                        "Dashcam Ingest",
+                        dataSource,
+                        context.getJobId()
+                )).addRoute("Geofence center", null, geofenceList, new ArrayList<>());
             }
 
             final int numberOfFiles = fileList.size();
@@ -141,7 +151,8 @@ class DashcamIngestModule implements DataSourceIngestModule {
                 double lastFrameLongitude = 0.0d;;
                 long lastFrameTime = 0;
                 long frameTime;
-                boolean removedOutliers = false;
+                double minDistanceToGeofence = Double.MAX_VALUE;
+                boolean haveRemovedOutliers = false;
                 GeoTrackPoints pointList = new GeoTrackPoints();
 
                 try (BufferedReader reader = new BufferedReader(
@@ -160,6 +171,14 @@ class DashcamIngestModule implements DataSourceIngestModule {
                             continue;
                         }
 
+                        if (!DashcamUtilities.isCoordinateInBounds(frameLongitude, frameLatitude)) {
+                            logger.log(Level.WARNING, "Frame coordinates out of bounds - skipping frame");
+                            continue;
+                        }
+
+                        minDistanceToGeofence = Math.min(minDistanceToGeofence,
+                                DashcamUtilities.getHaversineDistance(frameLongitude, frameLatitude, longitudeGeofence, latitudeGeofence));
+
                         //Additional checks for first point added, skip distance calculations in that case
                         if (pointList.isEmpty()) {
                             if (!removeOutliers || DashcamUtilities.isValidTrackCoordinate(frameLongitude, frameLatitude)) {
@@ -170,7 +189,7 @@ class DashcamIngestModule implements DataSourceIngestModule {
                                 lastFrameLatitude = frameLatitude;
                                 lastFrameTime = frameTime;
                             } else if (removeOutliers && !DashcamUtilities.isValidTrackCoordinate(frameLongitude, frameLatitude)) {
-                                removedOutliers = true;
+                                haveRemovedOutliers = true;
                             }
                             continue;
                         }
@@ -183,15 +202,15 @@ class DashcamIngestModule implements DataSourceIngestModule {
                         //Calculate speed if time increased (only once per second)
                         if (frameTime != lastFrameTime) {
                             calculatedSpeed = 3.6 * accumulatedDistance / (frameTime - lastFrameTime);
-                            System.out.println("+++++:");
-                            System.out.println("Speed in metadata:");
-                            System.out.println(metadataSpeed); //unit??
-                            System.out.println("Speed calculated:");
-                            System.out.println(calculatedSpeed); //km/h
+                            //System.out.println("+++++:");
+                            //System.out.println("Speed in metadata:");
+                            //System.out.println(metadataSpeed); //unit??
+                            //System.out.println("Speed calculated:");
+                            //System.out.println(calculatedSpeed); //km/h
                             accumulatedDistance = 0.0d;
                         }
                         if (removeOutliers && calculatedDistance > distanceThreshold) {
-                            removedOutliers = true;
+                            haveRemovedOutliers = true;
                         } else {
                             speedToUse = useCalculatedSpeed ? calculatedSpeed : metadataSpeed;
                             TrackPoint framePoint
@@ -208,7 +227,7 @@ class DashcamIngestModule implements DataSourceIngestModule {
                     continue;
                 }
                 if (removeOutliers) {
-                    msgText = removedOutliers
+                    msgText = haveRemovedOutliers
                             ? String.format("Removed outliers in %s", fileName)
                             : String.format("No outliers found in %s", fileName);
                     sendMsg(msgText, IngestMessage.MessageType.INFO);
@@ -220,6 +239,8 @@ class DashcamIngestModule implements DataSourceIngestModule {
                         currentFile,
                         context.getJobId()
                 )).addTrack(currentFile.getName(), pointList, new ArrayList<>());
+
+                System.out.println(minDistanceToGeofence);
 
                 currentFileCount += 1;
 
