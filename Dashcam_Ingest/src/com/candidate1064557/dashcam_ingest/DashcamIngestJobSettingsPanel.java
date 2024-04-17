@@ -46,14 +46,14 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
     @Override
     public IngestModuleIngestJobSettings getSettings() {
         return new DashcamIngestJobSettings(useCalculatedSpeedCheckBox.isSelected(),
-                                            removeOutliersCheckBox.isSelected(), 
-                                            mp4CheckBox.isSelected(),
-                                            movCheckBox.isSelected(),
-                                            enableGeofencingCheckBox.isSelected(),
-                                            latitudeField.getText(),
-                                            longitudeField.getText(),
-                                            radiusField.getText(),
-                                            (Date)dateField.getValue());
+                removeOutliersCheckBox.isSelected(),
+                mp4CheckBox.isSelected(),
+                movCheckBox.isSelected(),
+                enableGeofencingCheckBox.isSelected(),
+                latitudeField.getText(),
+                longitudeField.getText(),
+                radiusField.getText(),
+                (Date) dateField.getValue());
     }
 
     /**

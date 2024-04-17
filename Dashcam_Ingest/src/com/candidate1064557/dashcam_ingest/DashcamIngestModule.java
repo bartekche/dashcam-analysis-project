@@ -37,7 +37,7 @@ class DashcamIngestModule implements DataSourceIngestModule {
     private final String latitudeGeofenceText;
     private final String longitudeGeofenceText;
     private final String radiusGeofenceText;
-    private final Date dateGeofence; 
+    private final Date dateGeofence;
     private String msgText;
     private IngestJobContext context = null;
     private final boolean isWindows;
@@ -179,7 +179,6 @@ class DashcamIngestModule implements DataSourceIngestModule {
                             logger.log(Level.WARNING, "Frame coordinates out of bounds - skipping frame");
                             continue;
                         }*/
-
                         minDistanceToGeofence = Math.min(minDistanceToGeofence,
                                 DashcamUtilities.getHaversineDistance(frameLongitude, frameLatitude, longitudeGeofence, latitudeGeofence));
 

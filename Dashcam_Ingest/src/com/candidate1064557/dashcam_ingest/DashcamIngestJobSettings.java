@@ -32,7 +32,7 @@ public class DashcamIngestJobSettings implements IngestModuleIngestJobSettings {
         this.longitudeGeofence = longitudeGeofence;
         this.radiusGeofence = radiusGeofence;
         this.dateGeofence = dateGeofence;
-        
+
     }
 
     @Override
@@ -71,7 +71,7 @@ public class DashcamIngestJobSettings implements IngestModuleIngestJobSettings {
     boolean analyseMp4() {
         return analyseMp4;
     }
-    
+
     void setGeofence(boolean enabled) {
         geofence = enabled;
     }
@@ -79,35 +79,35 @@ public class DashcamIngestJobSettings implements IngestModuleIngestJobSettings {
     boolean geofence() {
         return geofence;
     }
-    
+
     void setLatitudeGeofence(String latitude) {
         latitudeGeofence = latitude;
     }
-    
-    String latitudeGeofence(){
+
+    String latitudeGeofence() {
         return latitudeGeofence;
     }
-    
+
     void setLongitudeGeofence(String longitude) {
         longitudeGeofence = longitude;
     }
-    
-    String longitudeGeofence(){
+
+    String longitudeGeofence() {
         return longitudeGeofence;
     }
-    
+
     void setRadiusGeofence(String radius) {
         radiusGeofence = radius;
     }
-    
-    String radiusGeofence(){
+
+    String radiusGeofence() {
         return radiusGeofence;
     }
-    
+
     void setDateGeofence(Date date) {
         dateGeofence = date;
     }
-    
+
     Date dateGeofence() {
         return dateGeofence;
     }
