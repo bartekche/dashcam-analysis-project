@@ -1,5 +1,6 @@
 package com.candidate1064557.dashcam_ingest;
 
+import java.util.Date;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
 /**
@@ -16,11 +17,12 @@ public class DashcamIngestJobSettings implements IngestModuleIngestJobSettings {
     private String latitudeGeofence = "0.000";
     private String longitudeGeofence = "0.000";
     private String radiusGeofence = "0.00";
+    private Date dateGeofence = new Date();
 
     DashcamIngestJobSettings() {
     }
 
-    DashcamIngestJobSettings(boolean useCalculatedSpeed, boolean removeOutliers, boolean analyseMp4, boolean analyseMov, boolean geofence, String latitudeGeofence, String longitudeGeofence, String radiusGeofence) {
+    DashcamIngestJobSettings(boolean useCalculatedSpeed, boolean removeOutliers, boolean analyseMp4, boolean analyseMov, boolean geofence, String latitudeGeofence, String longitudeGeofence, String radiusGeofence, Date dateGeofence) {
         this.useCalculatedSpeed = useCalculatedSpeed;
         this.removeOutliers = removeOutliers;
         this.analyseMp4 = analyseMp4;
@@ -29,6 +31,7 @@ public class DashcamIngestJobSettings implements IngestModuleIngestJobSettings {
         this.latitudeGeofence = latitudeGeofence;
         this.longitudeGeofence = longitudeGeofence;
         this.radiusGeofence = radiusGeofence;
+        this.dateGeofence = dateGeofence;
         
     }
 
@@ -99,5 +102,13 @@ public class DashcamIngestJobSettings implements IngestModuleIngestJobSettings {
     
     String radiusGeofence(){
         return radiusGeofence;
+    }
+    
+    void setDateGeofence(Date date) {
+        dateGeofence = date;
+    }
+    
+    Date dateGeofence() {
+        return dateGeofence;
     }
 }

@@ -39,7 +39,7 @@ public class DashcamUtilities {
         double yAbs = Math.abs(y);
         boolean xInvalidRange = xAbs >= (180.0 - eps) || xAbs <= eps;
         boolean yInvalidRange = yAbs >= (90.0 - eps) || yAbs <= eps;
-        return isCoordinateInBounds(xAbs, yAbs) && !(xInvalidRange && yInvalidRange);
+        return isCoordinateInBounds(xAbs, yAbs) && (!(xInvalidRange && yInvalidRange));
     }
 
     // Check whether coordinate pair is a valid location

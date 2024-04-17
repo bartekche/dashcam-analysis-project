@@ -1,5 +1,6 @@
 package com.candidate1064557.dashcam_ingest;
 
+import java.util.Date;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 
@@ -18,17 +19,17 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
     }
 
     private void customizeComponents(DashcamIngestJobSettings settings) {
-        latitudeField.setColumns(8);
-        longitudeField.setColumns(8);
-        radiusField.setColumns(5);
         latitudeField.setText(settings.latitudeGeofence());
         longitudeField.setText(settings.longitudeGeofence());
         radiusField.setText(settings.radiusGeofence());
+        dateField.setValue(settings.dateGeofence());
         useCalculatedSpeedCheckBox.setSelected(settings.useCalculatedSpeed());
         removeOutliersCheckBox.setSelected(settings.removeOutliers());
         mp4CheckBox.setSelected(settings.analyseMp4());
         movCheckBox.setSelected(settings.analyseMov());
         enableGeofencingCheckBox.setSelected(false);
+        dateField.setEnabled(enableGeofencingCheckBox.isSelected());
+        dateLabel.setEnabled(enableGeofencingCheckBox.isSelected());
         latitudeField.setEnabled(enableGeofencingCheckBox.isSelected());
         longitudeField.setEnabled(enableGeofencingCheckBox.isSelected());
         radiusField.setEnabled(enableGeofencingCheckBox.isSelected());
@@ -51,7 +52,8 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
                                             enableGeofencingCheckBox.isSelected(),
                                             latitudeField.getText(),
                                             longitudeField.getText(),
-                                            radiusField.getText());
+                                            radiusField.getText(),
+                                            (Date)dateField.getValue());
     }
 
     /**
@@ -76,6 +78,8 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
         radiusLabel = new javax.swing.JLabel();
         radiusField = new javax.swing.JTextField();
         enableGeofencingCheckBox = new javax.swing.JCheckBox();
+        dateField = new javax.swing.JFormattedTextField();
+        dateLabel = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(useCalculatedSpeedCheckBox, org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.useCalculatedSpeedCheckBox.text")); // NOI18N
         useCalculatedSpeedCheckBox.setToolTipText(org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.useCalculatedSpeedCheckBox.toolTipText")); // NOI18N
@@ -93,6 +97,7 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
 
         org.openide.awt.Mnemonics.setLocalizedText(latitudeLabel, org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.latitudeLabel.text")); // NOI18N
 
+        latitudeField.setColumns(7);
         latitudeField.setText(org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.latitudeField.text")); // NOI18N
         latitudeField.setCursor(new java.awt.Cursor(java.awt.Cursor.TEXT_CURSOR));
         latitudeField.addActionListener(new java.awt.event.ActionListener() {
@@ -103,10 +108,12 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
 
         org.openide.awt.Mnemonics.setLocalizedText(longitudeLabel, org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.longitudeLabel.text")); // NOI18N
 
+        longitudeField.setColumns(7);
         longitudeField.setText(org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.longitudeField.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(radiusLabel, org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.radiusLabel.text")); // NOI18N
 
+        radiusField.setColumns(5);
         radiusField.setText(org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.radiusField.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(enableGeofencingCheckBox, org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.enableGeofencingCheckBox.text")); // NOI18N
@@ -115,6 +122,12 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
                 enableGeofencingCheckBoxActionPerformed(evt);
             }
         });
+
+        dateField.setColumns(6);
+        dateField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.DateFormatter(java.text.DateFormat.getDateInstance(java.text.DateFormat.SHORT))));
+        dateField.setText(org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.dateField.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(dateLabel, org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.dateLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -132,20 +145,24 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
                             .addComponent(movCheckBox)
                             .addComponent(enableGeofencingCheckBox)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(radiusLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(radiusField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(longitudeLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(longitudeField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(layout.createSequentialGroup()
                                 .addComponent(latitudeLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(latitudeField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addComponent(useCalculatedSpeedCheckBox)
-                            .addComponent(removeOutliersCheckBox))))
-                .addContainerGap(145, Short.MAX_VALUE))
+                            .addComponent(removeOutliersCheckBox)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(dateLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(dateField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(radiusLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(radiusField, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(longitudeLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(longitudeField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                .addContainerGap(128, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -176,13 +193,19 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(radiusLabel)
                     .addComponent(radiusField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(37, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(dateLabel)
+                    .addComponent(dateField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(9, Short.MAX_VALUE))
         );
 
         useCalculatedSpeedCheckBox.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.useCalculatedSpeedCheckBox.AccessibleContext.accessibleName")); // NOI18N
     }// </editor-fold>//GEN-END:initComponents
 
     private void enableGeofencingCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_enableGeofencingCheckBoxActionPerformed
+        dateField.setEnabled(enableGeofencingCheckBox.isSelected());
+        dateLabel.setEnabled(enableGeofencingCheckBox.isSelected());
         latitudeField.setEnabled(enableGeofencingCheckBox.isSelected());
         longitudeField.setEnabled(enableGeofencingCheckBox.isSelected());
         radiusField.setEnabled(enableGeofencingCheckBox.isSelected());
@@ -196,6 +219,8 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
     }//GEN-LAST:event_latitudeFieldActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JFormattedTextField dateField;
+    private javax.swing.JLabel dateLabel;
     private javax.swing.JCheckBox enableGeofencingCheckBox;
     private javax.swing.JLabel geoFenceLabel;
     private javax.swing.JTextField latitudeField;

@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.Date;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
@@ -36,6 +37,7 @@ class DashcamIngestModule implements DataSourceIngestModule {
     private final String latitudeGeofenceText;
     private final String longitudeGeofenceText;
     private final String radiusGeofenceText;
+    private final Date dateGeofence; 
     private String msgText;
     private IngestJobContext context = null;
     private final boolean isWindows;
@@ -53,6 +55,7 @@ class DashcamIngestModule implements DataSourceIngestModule {
         this.latitudeGeofenceText = settings.latitudeGeofence();
         this.longitudeGeofenceText = settings.longitudeGeofence();
         this.radiusGeofenceText = settings.radiusGeofence();
+        this.dateGeofence = settings.dateGeofence();
         this.isWindows = System.getProperty("os.name")
                 .toLowerCase().startsWith("windows");
     }
@@ -75,6 +78,7 @@ class DashcamIngestModule implements DataSourceIngestModule {
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         try {
             if (isGeofenceEnabled) {
+                System.out.println(dateGeofence);
                 try {
                     latitudeGeofence = Double.parseDouble(latitudeGeofenceText);
                     longitudeGeofence = Double.parseDouble(longitudeGeofenceText);
@@ -171,10 +175,10 @@ class DashcamIngestModule implements DataSourceIngestModule {
                             continue;
                         }
 
-                        if (!DashcamUtilities.isCoordinateInBounds(frameLongitude, frameLatitude)) {
+                        /*if (!DashcamUtilities.isCoordinateInBounds(frameLongitude, frameLatitude)) {
                             logger.log(Level.WARNING, "Frame coordinates out of bounds - skipping frame");
                             continue;
-                        }
+                        }*/
 
                         minDistanceToGeofence = Math.min(minDistanceToGeofence,
                                 DashcamUtilities.getHaversineDistance(frameLongitude, frameLatitude, longitudeGeofence, latitudeGeofence));
@@ -232,14 +236,14 @@ class DashcamIngestModule implements DataSourceIngestModule {
                             : String.format("No outliers found in %s", fileName);
                     sendMsg(msgText, IngestMessage.MessageType.INFO);
                 }
-
-                (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
-                        moduleName,
-                        "Dashcam Ingest",
-                        currentFile,
-                        context.getJobId()
-                )).addTrack(currentFile.getName(), pointList, new ArrayList<>());
-
+                if (!isGeofenceEnabled || minDistanceToGeofence < radiusGeofence) {
+                    (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
+                            moduleName,
+                            "Dashcam Ingest",
+                            currentFile,
+                            context.getJobId()
+                    )).addTrack(currentFile.getName(), pointList, new ArrayList<>());
+                }
                 System.out.println(minDistanceToGeofence);
 
                 currentFileCount += 1;
