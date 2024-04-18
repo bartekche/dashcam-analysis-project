@@ -77,32 +77,33 @@ class DashcamIngestModule implements DataSourceIngestModule {
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         try {
+            // Return error if OS not supported
+            if (!isWindows) {
+                org.sleuthkit.autopsy.coreutils.MessageNotifyUtil.Notify
+                        .show("DashcamIngest", "Current OS is not supported", MessageNotifyUtil.MessageType.ERROR);
+                logger.log(Level.SEVERE, "Dashcam ingest is not supported for current OS");
+                return IngestModule.ProcessResult.ERROR;
+            }
+
+            // Parse doubles for point of interest filtering 
             if (isGeofenceEnabled) {
-                System.out.println(dateGeofence);
                 try {
                     latitudeGeofence = Double.parseDouble(latitudeGeofenceText);
                     longitudeGeofence = Double.parseDouble(longitudeGeofenceText);
                     radiusGeofence = Double.parseDouble(radiusGeofenceText);
                 } catch (NumberFormatException ex) {
-                    logger.log(Level.WARNING, "Geofence coordinate parse failed - skipping", ex);
-                    sendMsg("Geofence coordinate parse failed - skipping", IngestMessage.MessageType.WARNING);
+                    logger.log(Level.WARNING, "Point of interest coordinate parse failed - skipping", ex);
+                    sendMsg("Point of interest coordinate parse failed - skipping", IngestMessage.MessageType.WARNING);
                     isGeofenceEnabled = false;
                 }
                 if (!DashcamUtilities.isCoordinateInBounds(longitudeGeofence, latitudeGeofence)) {
-                    logger.log(Level.WARNING, "Geofence coordinate out of bounds - skipping");
-                    sendMsg("Geofence coordinate out of bounds - skipping", IngestMessage.MessageType.WARNING);
+                    logger.log(Level.WARNING, "Point of interest coordinate out of bounds - skipping");
+                    sendMsg("Point of interest coordinate out of bounds - skipping", IngestMessage.MessageType.WARNING);
                     isGeofenceEnabled = false;
                 }
             }
 
-            if (!isWindows) {
-                // todo - linux command & test
-                org.sleuthkit.autopsy.coreutils.MessageNotifyUtil.Notify
-                        .show("DashcamIngest", "Linux not supported", MessageNotifyUtil.MessageType.ERROR);
-                logger.log(Level.SEVERE, "Dashcam ingest for linux not supported");
-                return IngestModule.ProcessResult.ERROR;
-            }
-
+            // Get the files from the data source to examine
             FileManager fileManager = Case.getCurrentCaseThrows()
                     .getServices().getFileManager();
             List<AbstractFile> fileList = new ArrayList<>();
@@ -116,18 +117,20 @@ class DashcamIngestModule implements DataSourceIngestModule {
                 fileList.addAll(movFileList);
             }
 
+            // Generate a waypoint for the point of interest
             if (isGeofenceEnabled) {
                 GeoWaypoints geofenceList = new GeoWaypoints();
-                Waypoint geofencePoint = new Waypoint(latitudeGeofence, longitudeGeofence, null, "Place of interest");
+                Waypoint geofencePoint = new Waypoint(latitudeGeofence, longitudeGeofence, null, "Point of interest");
                 geofenceList.addPoint(geofencePoint);
                 (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
                         moduleName,
                         "Dashcam Ingest",
                         dataSource,
                         context.getJobId()
-                )).addRoute("Place of interest", dateGeofence.getTime()/1000 , geofenceList, new ArrayList<>());
+                )).addRoute("Point of interest", dateGeofence.getTime() / 1000, geofenceList, new ArrayList<>());
             }
 
+            // Initialise a progress bar
             final int numberOfFiles = fileList.size();
             progressBar.switchToDeterminate(numberOfFiles);
 
@@ -136,23 +139,23 @@ class DashcamIngestModule implements DataSourceIngestModule {
 
                 final String fileName = currentFile.getName();
                 progressBar.progress(fileName, currentFileCount);
+
+                // Build and execute the exiftool command
                 ProcessBuilder builder = new ProcessBuilder();
                 if (isWindows) {
                     String currentCommand = windowsExifCommand + currentFile.getLocalAbsPath();
                     builder.command(currentCommand);
-                } else {
-                    // todo - linux command & test
                 }
                 builder.directory(new File(System.getProperty("user.home")));
                 Process process = builder.start();
 
                 String frameData;
                 double frameLatitude, frameLongitude, metadataSpeed;
-                double calculatedSpeed = 0.0d, calculatedDistance = 0.0d;
+                double calculatedSpeed = 0.0d, calculatedDistance;
                 double speedToUse;
                 double accumulatedDistance = 0.0d;
                 double lastFrameLatitude = 0.0d;
-                double lastFrameLongitude = 0.0d;;
+                double lastFrameLongitude = 0.0d;
                 long lastFrameTime = 0;
                 long frameTime;
                 double minDistanceToGeofence = Double.MAX_VALUE;
@@ -175,10 +178,6 @@ class DashcamIngestModule implements DataSourceIngestModule {
                             continue;
                         }
 
-                        /*if (!DashcamUtilities.isCoordinateInBounds(frameLongitude, frameLatitude)) {
-                            logger.log(Level.WARNING, "Frame coordinates out of bounds - skipping frame");
-                            continue;
-                        }*/
                         minDistanceToGeofence = Math.min(minDistanceToGeofence,
                                 DashcamUtilities.getHaversineDistance(frameLongitude, frameLatitude, longitudeGeofence, latitudeGeofence));
 
@@ -204,12 +203,7 @@ class DashcamIngestModule implements DataSourceIngestModule {
 
                         //Calculate speed if time increased (only once per second)
                         if (frameTime != lastFrameTime) {
-                            calculatedSpeed = 3.6 * accumulatedDistance / (frameTime - lastFrameTime);
-                            //System.out.println("+++++:");
-                            //System.out.println("Speed in metadata:");
-                            //System.out.println(metadataSpeed); //unit??
-                            //System.out.println("Speed calculated:");
-                            //System.out.println(calculatedSpeed); //km/h
+                            calculatedSpeed = 3.6 * accumulatedDistance / (frameTime - lastFrameTime); //km\h
                             accumulatedDistance = 0.0d;
                         }
                         if (removeOutliers && calculatedDistance > distanceThreshold) {
@@ -229,12 +223,16 @@ class DashcamIngestModule implements DataSourceIngestModule {
                     sendMsg(String.format("No track found in %s", fileName), IngestMessage.MessageType.WARNING);
                     continue;
                 }
+                //Inform the user if any waypoints were discarded in the file
                 if (removeOutliers) {
                     msgText = haveRemovedOutliers
                             ? String.format("Removed outliers in %s", fileName)
                             : String.format("No outliers found in %s", fileName);
                     sendMsg(msgText, IngestMessage.MessageType.INFO);
                 }
+
+                // If point of interest filtering enabled upload track only if
+                // at least one of its waypoints in the radius
                 if (!isGeofenceEnabled || minDistanceToGeofence < radiusGeofence) {
                     (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
                             moduleName,
@@ -243,11 +241,10 @@ class DashcamIngestModule implements DataSourceIngestModule {
                             context.getJobId()
                     )).addTrack(currentFile.getName(), pointList, new ArrayList<>());
                 }
-                System.out.println(minDistanceToGeofence);
 
                 currentFileCount += 1;
 
-                // check if we were cancelled
+                // Check if the processs were cancelled
                 if (context.dataSourceIngestIsCancelled()) {
                     return IngestModule.ProcessResult.OK;
                 }
