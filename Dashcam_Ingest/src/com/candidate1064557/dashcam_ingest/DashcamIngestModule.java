@@ -118,14 +118,14 @@ class DashcamIngestModule implements DataSourceIngestModule {
 
             if (isGeofenceEnabled) {
                 GeoWaypoints geofenceList = new GeoWaypoints();
-                Waypoint geofencePoint = new Waypoint(latitudeGeofence, longitudeGeofence, null, null);
+                Waypoint geofencePoint = new Waypoint(latitudeGeofence, longitudeGeofence, null, "Place of interest");
                 geofenceList.addPoint(geofencePoint);
                 (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
                         moduleName,
                         "Dashcam Ingest",
                         dataSource,
                         context.getJobId()
-                )).addRoute("Geofence center", null, geofenceList, new ArrayList<>());
+                )).addRoute("Place of interest", dateGeofence.getTime()/1000 , geofenceList, new ArrayList<>());
             }
 
             final int numberOfFiles = fileList.size();
