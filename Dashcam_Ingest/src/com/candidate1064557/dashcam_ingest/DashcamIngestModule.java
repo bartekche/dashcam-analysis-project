@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.Date;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -17,9 +16,7 @@ import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.blackboardutils.GeoArtifactsHelper;
 import org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPoints;
 import org.sleuthkit.datamodel.blackboardutils.attributes.GeoWaypoints;
@@ -72,6 +69,115 @@ class DashcamIngestModule implements DataSourceIngestModule {
                 msgText);
         IngestServices.getInstance().postMessage(message);
 
+    }
+
+    private GeoTrackPoints extractTrack(AbstractFile currentFile) {
+        String frameData;
+        double frameLatitude, frameLongitude, metadataSpeed;
+        double calculatedSpeed = 0.0d, calculatedDistance;
+        double speedToUse;
+        double accumulatedDistance = 0.0d;
+        double lastFrameLatitude = 0.0d;
+        double lastFrameLongitude = 0.0d;
+        long lastFrameTime = 0;
+        long frameTime;
+        boolean haveRemovedOutliers = false;
+        final String fileName = currentFile.getName();
+        GeoTrackPoints pointList = new GeoTrackPoints();
+        // Build and execute the exiftool command
+        ProcessBuilder builder = new ProcessBuilder();
+        String currentCommand = windowsExifCommand + currentFile.getLocalAbsPath();
+        Process process;
+        try {
+            builder.command(currentCommand);
+            builder.directory(new File(System.getProperty("user.home")));
+            process = builder.start();
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, String.format("Command builder failed - skipping file %s", fileName), e);
+            sendMsg(String.format("Command builder failed - skipping file %s", fileName), IngestMessage.MessageType.WARNING);
+            return new GeoTrackPoints();
+        }
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            while ((frameData = reader.readLine()) != null) {
+                //Reading data for a single waypoint:
+                String[] frameDataSeparated = frameData.split("\\|");
+                try {
+                    frameLatitude = Double.parseDouble(frameDataSeparated[0]);
+                    frameLongitude = Double.parseDouble(frameDataSeparated[1]);
+                    metadataSpeed = Double.parseDouble(frameDataSeparated[2]);
+                    frameTime = (long) (Double.parseDouble(frameDataSeparated[3]));
+                } catch (NumberFormatException e) {
+                    logger.log(Level.WARNING, "Parsing error - skipping frame", e);
+                    continue;
+                }
+
+                //Adding first waypoint different - outlier removal cannot be based
+                //on distance to the last waypoint
+                if (pointList.isEmpty()) {
+                    if (!removeOutliers || DashcamUtilities.isValidTrackCoordinate(frameLongitude, frameLatitude)) {
+                        TrackPoint framePoint
+                                = new TrackPoint(frameLatitude, frameLongitude, null, null, metadataSpeed, null, null, frameTime);
+                        pointList.addPoint(framePoint);
+                        lastFrameLongitude = frameLongitude;
+                        lastFrameLatitude = frameLatitude;
+                        lastFrameTime = frameTime;
+                    } else if (removeOutliers && !DashcamUtilities.isValidTrackCoordinate(frameLongitude, frameLatitude)) {
+                        haveRemovedOutliers = true;
+                    }
+                    continue;
+                }
+
+                //Calculate distance between this waypoint and the last one recorded
+                calculatedDistance
+                        = DashcamUtilities.getHaversineDistance(frameLongitude, frameLatitude, lastFrameLongitude, lastFrameLatitude);
+                accumulatedDistance += calculatedDistance;
+
+                //Calculate speed if time increased
+                if (frameTime != lastFrameTime) {
+                    calculatedSpeed = 3.6 * accumulatedDistance / (frameTime - lastFrameTime); //km\h
+                    accumulatedDistance = 0.0d;
+                }
+
+                //Outlier removal - skip waypoint if the distance between waypooints is too high
+                if (removeOutliers && calculatedDistance > distanceThreshold) {
+                    haveRemovedOutliers = true;
+                } else {
+                    speedToUse = useCalculatedSpeed ? calculatedSpeed : metadataSpeed;
+                    TrackPoint framePoint
+                            = new TrackPoint(frameLatitude, frameLongitude, null, null, speedToUse, null, null, frameTime);
+                    pointList.addPoint(framePoint);
+                    lastFrameLongitude = frameLongitude;
+                    lastFrameLatitude = frameLatitude;
+                    lastFrameTime = frameTime;
+                }
+            }
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, String.format("Exiftool output parsing failed - skipping file %s", fileName), e);
+            sendMsg(String.format("Exiftool output failed - skipping file %s", fileName), IngestMessage.MessageType.WARNING);
+            return new GeoTrackPoints();
+        }
+        //Inform the user if any waypoints were discarded in the file
+        if (removeOutliers && !pointList.isEmpty()) {
+            msgText = haveRemovedOutliers
+                    ? String.format("Removed outliers in %s", fileName)
+                    : String.format("No outliers found in %s", fileName);
+            sendMsg(msgText, IngestMessage.MessageType.INFO);
+        }
+
+        return pointList;
+    }
+
+    private double getDistanceToPOI(GeoTrackPoints track) {
+        double minDistanceToPOI = Double.MAX_VALUE;
+        double longitudePoint, latitudePoint;
+        for (TrackPoint currentPoint : track) {
+            longitudePoint = currentPoint.getLongitude();
+            latitudePoint = currentPoint.getLatitude();
+            minDistanceToPOI = Math.min(minDistanceToPOI,
+                    DashcamUtilities.getHaversineDistance(longitudePoint, latitudePoint, longitudeGeofence, latitudeGeofence));
+        }
+        return minDistanceToPOI;
     }
 
     @Override
@@ -136,117 +242,23 @@ class DashcamIngestModule implements DataSourceIngestModule {
 
             int currentFileCount = 0;
             for (AbstractFile currentFile : fileList) {
+                progressBar.progress(currentFile.getName(), currentFileCount);
 
-                final String fileName = currentFile.getName();
-                progressBar.progress(fileName, currentFileCount);
+                GeoTrackPoints resultingTrack = extractTrack(currentFile);
 
-                // Build and execute the exiftool command
-                ProcessBuilder builder = new ProcessBuilder();
-                String currentCommand = windowsExifCommand + currentFile.getLocalAbsPath();
-                Process process;
-                try {
-                    builder.command(currentCommand);
-                    builder.directory(new File(System.getProperty("user.home")));
-                    process = builder.start();
-                } catch (Exception e) {
-                    logger.log(Level.SEVERE, String.format("Command builder failed - skipping file %s", fileName), e);
-                    sendMsg(String.format("Command builder failed - skipping file %s", fileName), IngestMessage.MessageType.WARNING);
-                    continue;
-                }
-
-                String frameData;
-                double frameLatitude, frameLongitude, metadataSpeed;
-                double calculatedSpeed = 0.0d, calculatedDistance;
-                double speedToUse;
-                double accumulatedDistance = 0.0d;
-                double lastFrameLatitude = 0.0d;
-                double lastFrameLongitude = 0.0d;
-                long lastFrameTime = 0;
-                long frameTime;
-                double minDistanceToGeofence = Double.MAX_VALUE;
-                boolean haveRemovedOutliers = false;
-                GeoTrackPoints pointList = new GeoTrackPoints();
-
-                try (BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(process.getInputStream()))) {
-                    while ((frameData = reader.readLine()) != null) {
-                        //Reading data for a single waypoint:
-                        String[] frameDataSeparated = frameData.split("\\|");
-                        try {
-                            frameLatitude = Double.parseDouble(frameDataSeparated[0]);
-                            frameLongitude = Double.parseDouble(frameDataSeparated[1]);
-                            metadataSpeed = Double.parseDouble(frameDataSeparated[2]);
-                            frameTime = (long) (Double.parseDouble(frameDataSeparated[3]));
-                        } catch (NumberFormatException e) {
-                            logger.log(Level.WARNING, "Parsing error - skipping frame", e);
-                            continue;
-                        }
-                        minDistanceToGeofence = Math.min(minDistanceToGeofence,
-                                DashcamUtilities.getHaversineDistance(frameLongitude, frameLatitude, longitudeGeofence, latitudeGeofence));
-
-                        //Additional checks for first point added, skip distance calculations in that case
-                        if (pointList.isEmpty()) {
-                            if (!removeOutliers || DashcamUtilities.isValidTrackCoordinate(frameLongitude, frameLatitude)) {
-                                TrackPoint framePoint
-                                        = new TrackPoint(frameLatitude, frameLongitude, null, null, metadataSpeed, null, null, frameTime);
-                                pointList.addPoint(framePoint);
-                                lastFrameLongitude = frameLongitude;
-                                lastFrameLatitude = frameLatitude;
-                                lastFrameTime = frameTime;
-                            } else if (removeOutliers && !DashcamUtilities.isValidTrackCoordinate(frameLongitude, frameLatitude)) {
-                                haveRemovedOutliers = true;
-                            }
-                            continue;
-                        }
-
-                        //Calculate distance
-                        calculatedDistance
-                                = DashcamUtilities.getHaversineDistance(frameLongitude, frameLatitude, lastFrameLongitude, lastFrameLatitude);
-                        accumulatedDistance += calculatedDistance;
-
-                        //Calculate speed if time increased (only once per second)
-                        if (frameTime != lastFrameTime) {
-                            calculatedSpeed = 3.6 * accumulatedDistance / (frameTime - lastFrameTime); //km\h
-                            accumulatedDistance = 0.0d;
-                        }
-                        if (removeOutliers && calculatedDistance > distanceThreshold) {
-                            haveRemovedOutliers = true;
-                        } else {
-                            speedToUse = useCalculatedSpeed ? calculatedSpeed : metadataSpeed;
-                            TrackPoint framePoint
-                                    = new TrackPoint(frameLatitude, frameLongitude, null, null, speedToUse, null, null, frameTime);
-                            pointList.addPoint(framePoint);
-                            lastFrameLongitude = frameLongitude;
-                            lastFrameLatitude = frameLatitude;
-                            lastFrameTime = frameTime;
-                        }
+                if (resultingTrack.isEmpty()) {
+                    sendMsg(String.format("No track found in %s", currentFile.getName()), IngestMessage.MessageType.INFO);
+                } else {
+                    // If proximity filtering enabled upload track only if
+                    // at least one of its waypoints in the radius
+                    if (!isGeofenceEnabled || getDistanceToPOI(resultingTrack) < radiusGeofence) {
+                        (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
+                                moduleName,
+                                "Dashcam Ingest",
+                                currentFile,
+                                context.getJobId()
+                        )).addTrack(currentFile.getName(), resultingTrack, new ArrayList<>());
                     }
-                } catch (Exception e) {
-                    logger.log(Level.SEVERE, String.format("Exiftool output parsing failed - skipping file %s", fileName), e);
-                    sendMsg(String.format("Exiftool output failed - skipping file %s", fileName), IngestMessage.MessageType.WARNING);
-                    continue;
-                }
-                if (pointList.isEmpty()) {
-                    sendMsg(String.format("No track found in %s", fileName), IngestMessage.MessageType.WARNING);
-                    continue;
-                }
-                //Inform the user if any waypoints were discarded in the file
-                if (removeOutliers) {
-                    msgText = haveRemovedOutliers
-                            ? String.format("Removed outliers in %s", fileName)
-                            : String.format("No outliers found in %s", fileName);
-                    sendMsg(msgText, IngestMessage.MessageType.INFO);
-                }
-
-                // If point of interest filtering enabled upload track only if
-                // at least one of its waypoints in the radius
-                if (!isGeofenceEnabled || minDistanceToGeofence < radiusGeofence) {
-                    (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
-                            moduleName,
-                            "Dashcam Ingest",
-                            currentFile,
-                            context.getJobId()
-                    )).addTrack(currentFile.getName(), pointList, new ArrayList<>());
                 }
 
                 currentFileCount += 1;
