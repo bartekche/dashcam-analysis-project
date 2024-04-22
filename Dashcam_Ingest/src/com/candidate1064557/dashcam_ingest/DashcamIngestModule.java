@@ -142,12 +142,17 @@ class DashcamIngestModule implements DataSourceIngestModule {
 
                 // Build and execute the exiftool command
                 ProcessBuilder builder = new ProcessBuilder();
-                if (isWindows) {
-                    String currentCommand = windowsExifCommand + currentFile.getLocalAbsPath();
+                String currentCommand = windowsExifCommand + currentFile.getLocalAbsPath();
+                Process process;
+                try {
                     builder.command(currentCommand);
+                    builder.directory(new File(System.getProperty("user.home")));
+                    process = builder.start();
+                } catch (Exception e) {
+                    logger.log(Level.SEVERE, String.format("Command builder failed - skipping file %s", fileName), e);
+                    sendMsg(String.format("Command builder failed - skipping file %s", fileName), IngestMessage.MessageType.WARNING);
+                    continue;
                 }
-                builder.directory(new File(System.getProperty("user.home")));
-                Process process = builder.start();
 
                 String frameData;
                 double frameLatitude, frameLongitude, metadataSpeed;
@@ -165,7 +170,6 @@ class DashcamIngestModule implements DataSourceIngestModule {
                 try (BufferedReader reader = new BufferedReader(
                         new InputStreamReader(process.getInputStream()))) {
                     while ((frameData = reader.readLine()) != null) {
-
                         //Reading data for a single waypoint:
                         String[] frameDataSeparated = frameData.split("\\|");
                         try {
@@ -174,10 +178,9 @@ class DashcamIngestModule implements DataSourceIngestModule {
                             metadataSpeed = Double.parseDouble(frameDataSeparated[2]);
                             frameTime = (long) (Double.parseDouble(frameDataSeparated[3]));
                         } catch (NumberFormatException e) {
-                            logger.log(Level.WARNING, "Parsing error - skipping frame");
+                            logger.log(Level.WARNING, "Parsing error - skipping frame", e);
                             continue;
                         }
-
                         minDistanceToGeofence = Math.min(minDistanceToGeofence,
                                 DashcamUtilities.getHaversineDistance(frameLongitude, frameLatitude, longitudeGeofence, latitudeGeofence));
 
@@ -218,6 +221,10 @@ class DashcamIngestModule implements DataSourceIngestModule {
                             lastFrameTime = frameTime;
                         }
                     }
+                } catch (Exception e) {
+                    logger.log(Level.SEVERE, String.format("Exiftool output parsing failed - skipping file %s", fileName), e);
+                    sendMsg(String.format("Exiftool output failed - skipping file %s", fileName), IngestMessage.MessageType.WARNING);
+                    continue;
                 }
                 if (pointList.isEmpty()) {
                     sendMsg(String.format("No track found in %s", fileName), IngestMessage.MessageType.WARNING);
@@ -253,14 +260,9 @@ class DashcamIngestModule implements DataSourceIngestModule {
             progressBar.progress(numberOfFiles);
             return IngestModule.ProcessResult.OK;
 
-        } catch (TskCoreException | NoCurrentCaseException | BlackboardException ex) {
+        } catch (Exception ex) {
             logger.log(Level.SEVERE, "Module failed", ex);
             return IngestModule.ProcessResult.ERROR;
-
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Command execution failed", ex);
-            return IngestModule.ProcessResult.ERROR;
-
         }
     }
 }
