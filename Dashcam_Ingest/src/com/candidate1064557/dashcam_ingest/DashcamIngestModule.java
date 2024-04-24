@@ -9,6 +9,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -53,8 +54,7 @@ class DashcamIngestModule implements DataSourceIngestModule {
         this.longitudeGeofenceText = settings.longitudeGeofence();
         this.radiusGeofenceText = settings.radiusGeofence();
         this.dateGeofence = settings.dateGeofence();
-        this.isWindows = System.getProperty("os.name")
-                .toLowerCase().startsWith("windows");
+        this.isWindows = PlatformUtil.isWindowsOS();
     }
 
     @Override

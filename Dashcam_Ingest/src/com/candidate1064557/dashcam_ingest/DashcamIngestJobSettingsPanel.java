@@ -100,11 +100,6 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
         latitudeField.setColumns(7);
         latitudeField.setText(org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.latitudeField.text")); // NOI18N
         latitudeField.setCursor(new java.awt.Cursor(java.awt.Cursor.TEXT_CURSOR));
-        latitudeField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                latitudeFieldActionPerformed(evt);
-            }
-        });
 
         org.openide.awt.Mnemonics.setLocalizedText(longitudeLabel, org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.longitudeLabel.text")); // NOI18N
 
@@ -213,10 +208,6 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
         longitudeLabel.setEnabled(enableGeofencingCheckBox.isSelected());
         radiusLabel.setEnabled(enableGeofencingCheckBox.isSelected());
     }//GEN-LAST:event_enableGeofencingCheckBoxActionPerformed
-
-    private void latitudeFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_latitudeFieldActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_latitudeFieldActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JFormattedTextField dateField;
