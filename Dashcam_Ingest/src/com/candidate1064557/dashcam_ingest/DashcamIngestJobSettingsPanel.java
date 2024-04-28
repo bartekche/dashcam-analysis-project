@@ -36,6 +36,8 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
         latitudeLabel.setEnabled(enableGeofencingCheckBox.isSelected());
         longitudeLabel.setEnabled(enableGeofencingCheckBox.isSelected());
         radiusLabel.setEnabled(enableGeofencingCheckBox.isSelected());
+        distanceField.setEnabled(removeOutliersCheckBox.isSelected());
+        distanceLabel.setEnabled(removeOutliersCheckBox.isSelected());
     }
 
     /**
@@ -53,7 +55,9 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
                 latitudeField.getText(),
                 longitudeField.getText(),
                 radiusField.getText(),
-                (Date) dateField.getValue());
+                (Date) dateField.getValue(),
+                (long) distanceField.getValue());
+
     }
 
     /**
@@ -70,7 +74,6 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
         videoFormatsLabel = new javax.swing.JLabel();
         mp4CheckBox = new javax.swing.JCheckBox();
         movCheckBox = new javax.swing.JCheckBox();
-        geoFenceLabel = new javax.swing.JLabel();
         latitudeLabel = new javax.swing.JLabel();
         latitudeField = new javax.swing.JTextField();
         longitudeLabel = new javax.swing.JLabel();
@@ -80,20 +83,25 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
         enableGeofencingCheckBox = new javax.swing.JCheckBox();
         dateField = new javax.swing.JFormattedTextField();
         dateLabel = new javax.swing.JLabel();
+        distanceField = new javax.swing.JFormattedTextField();
+        distanceLabel = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(useCalculatedSpeedCheckBox, org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.useCalculatedSpeedCheckBox.text")); // NOI18N
         useCalculatedSpeedCheckBox.setToolTipText(org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.useCalculatedSpeedCheckBox.toolTipText")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(removeOutliersCheckBox, org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.removeOutliersCheckBox.text")); // NOI18N
         removeOutliersCheckBox.setActionCommand(org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.removeOutliersCheckBox.actionCommand")); // NOI18N
+        removeOutliersCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                removeOutliersCheckBoxActionPerformed(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(videoFormatsLabel, org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.videoFormatsLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(mp4CheckBox, org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.mp4CheckBox.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(movCheckBox, org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.movCheckBox.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(geoFenceLabel, org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.geoFenceLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(latitudeLabel, org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.latitudeLabel.text")); // NOI18N
 
@@ -124,27 +132,37 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
 
         org.openide.awt.Mnemonics.setLocalizedText(dateLabel, org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.dateLabel.text")); // NOI18N
 
+        distanceField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#0"))));
+        distanceField.setText(org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.distanceField.text_1")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(distanceLabel, org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.distanceLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(14, 14, 14)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(videoFormatsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 138, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(geoFenceLabel)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(8, 8, 8)
+                    .addComponent(enableGeofencingCheckBox)
+                    .addComponent(useCalculatedSpeedCheckBox)
+                    .addComponent(removeOutliersCheckBox)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(mp4CheckBox)
-                            .addComponent(movCheckBox)
-                            .addComponent(enableGeofencingCheckBox)
+                            .addComponent(movCheckBox))
+                        .addComponent(videoFormatsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 138, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(21, 21, 21)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(distanceLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(distanceField, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(latitudeLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(latitudeField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(useCalculatedSpeedCheckBox)
-                            .addComponent(removeOutliersCheckBox)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(dateLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -167,16 +185,18 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(removeOutliersCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(distanceField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(distanceLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(videoFormatsLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(mp4CheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(movCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(geoFenceLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(enableGeofencingCheckBox)
-                .addGap(7, 7, 7)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(latitudeLabel)
                     .addComponent(latitudeField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -192,7 +212,7 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(dateLabel)
                     .addComponent(dateField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(9, Short.MAX_VALUE))
+                .addGap(41, 41, 41))
         );
 
         useCalculatedSpeedCheckBox.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(DashcamIngestJobSettingsPanel.class, "DashcamIngestJobSettingsPanel.useCalculatedSpeedCheckBox.AccessibleContext.accessibleName")); // NOI18N
@@ -209,11 +229,17 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
         radiusLabel.setEnabled(enableGeofencingCheckBox.isSelected());
     }//GEN-LAST:event_enableGeofencingCheckBoxActionPerformed
 
+    private void removeOutliersCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeOutliersCheckBoxActionPerformed
+        distanceField.setEnabled(removeOutliersCheckBox.isSelected());
+        distanceLabel.setEnabled(removeOutliersCheckBox.isSelected());
+    }//GEN-LAST:event_removeOutliersCheckBoxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JFormattedTextField dateField;
     private javax.swing.JLabel dateLabel;
+    private javax.swing.JFormattedTextField distanceField;
+    private javax.swing.JLabel distanceLabel;
     private javax.swing.JCheckBox enableGeofencingCheckBox;
-    private javax.swing.JLabel geoFenceLabel;
     private javax.swing.JTextField latitudeField;
     private javax.swing.JLabel latitudeLabel;
     private javax.swing.JTextField longitudeField;

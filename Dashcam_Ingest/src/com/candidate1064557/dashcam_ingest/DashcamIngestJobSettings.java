@@ -17,12 +17,13 @@ public class DashcamIngestJobSettings implements IngestModuleIngestJobSettings {
     private String latitudeGeofence = "0.000";
     private String longitudeGeofence = "0.000";
     private String radiusGeofence = "0.00";
+    private long distanceThreshold = 0;
     private Date dateGeofence = new Date();
 
     DashcamIngestJobSettings() {
     }
 
-    DashcamIngestJobSettings(boolean useCalculatedSpeed, boolean removeOutliers, boolean analyseMp4, boolean analyseMov, boolean geofence, String latitudeGeofence, String longitudeGeofence, String radiusGeofence, Date dateGeofence) {
+    DashcamIngestJobSettings(boolean useCalculatedSpeed, boolean removeOutliers, boolean analyseMp4, boolean analyseMov, boolean geofence, String latitudeGeofence, String longitudeGeofence, String radiusGeofence, Date dateGeofence, long distanceThreshold) {
         this.useCalculatedSpeed = useCalculatedSpeed;
         this.removeOutliers = removeOutliers;
         this.analyseMp4 = analyseMp4;
@@ -32,7 +33,7 @@ public class DashcamIngestJobSettings implements IngestModuleIngestJobSettings {
         this.longitudeGeofence = longitudeGeofence;
         this.radiusGeofence = radiusGeofence;
         this.dateGeofence = dateGeofence;
-
+        this.distanceThreshold = distanceThreshold;
     }
 
     @Override
@@ -110,5 +111,13 @@ public class DashcamIngestJobSettings implements IngestModuleIngestJobSettings {
 
     Date dateGeofence() {
         return dateGeofence;
+    }
+
+    void setDistanceThreshold(long distance) {
+        distanceThreshold = distance;
+    }
+
+    long distanceThreshold() {
+        return distanceThreshold;
     }
 }

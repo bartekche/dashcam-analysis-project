@@ -41,7 +41,7 @@ class DashcamIngestModule implements DataSourceIngestModule {
     private final boolean isWindows;
     private final String moduleName = DashcamIngestModuleFactory.getModuleName();
     private final Logger logger = IngestServices.getInstance().getLogger(moduleName);
-    private final double distanceThreshold = 300;
+    private final double distanceThreshold;
     private double latitudeGeofence, longitudeGeofence, radiusGeofence;
 
     DashcamIngestModule(DashcamIngestJobSettings settings) {
@@ -54,6 +54,7 @@ class DashcamIngestModule implements DataSourceIngestModule {
         this.longitudeGeofenceText = settings.longitudeGeofence();
         this.radiusGeofenceText = settings.radiusGeofence();
         this.dateGeofence = settings.dateGeofence();
+        this.distanceThreshold = settings.distanceThreshold();
         this.isWindows = PlatformUtil.isWindowsOS();
     }
 
@@ -82,6 +83,7 @@ class DashcamIngestModule implements DataSourceIngestModule {
         long lastFrameTime = 0;
         long frameTime;
         boolean haveRemovedOutliers = false;
+        boolean haveCalculatedSpeed = false;
         final String fileName = currentFile.getName();
         GeoTrackPoints pointList = new GeoTrackPoints();
         // Build and execute the exiftool command
@@ -116,8 +118,15 @@ class DashcamIngestModule implements DataSourceIngestModule {
                 //on distance to the last waypoint
                 if (pointList.isEmpty()) {
                     if (!removeOutliers || DashcamUtilities.isValidTrackCoordinate(frameLongitude, frameLatitude)) {
-                        TrackPoint framePoint
-                                = new TrackPoint(frameLatitude, frameLongitude, null, null, metadataSpeed, null, null, frameTime);
+                        //First waypoint - calculated speed has to be null
+                        TrackPoint framePoint;
+                        if (useCalculatedSpeed) {
+                            framePoint
+                                    = new TrackPoint(frameLatitude, frameLongitude, null, null, null, null, null, frameTime);
+                        } else {
+                            framePoint
+                                    = new TrackPoint(frameLatitude, frameLongitude, null, null, metadataSpeed, null, null, frameTime);
+                        }
                         pointList.addPoint(framePoint);
                         lastFrameLongitude = frameLongitude;
                         lastFrameLatitude = frameLatitude;
@@ -135,17 +144,28 @@ class DashcamIngestModule implements DataSourceIngestModule {
 
                 //Calculate speed if time increased
                 if (frameTime != lastFrameTime) {
-                    calculatedSpeed = 3.6 * accumulatedDistance / (frameTime - lastFrameTime); //km\h
+                    calculatedSpeed = accumulatedDistance / (frameTime - lastFrameTime); //m/s
                     accumulatedDistance = 0.0d;
+                    haveCalculatedSpeed = true;
                 }
 
                 //Outlier removal - skip waypoint if the distance between waypooints is too high
                 if (removeOutliers && calculatedDistance > distanceThreshold) {
                     haveRemovedOutliers = true;
                 } else {
-                    speedToUse = useCalculatedSpeed ? calculatedSpeed : metadataSpeed;
-                    TrackPoint framePoint
-                            = new TrackPoint(frameLatitude, frameLongitude, null, null, speedToUse, null, null, frameTime);
+                    TrackPoint framePoint;
+                    if (useCalculatedSpeed) {
+                        if (haveCalculatedSpeed) {
+                            framePoint
+                                    = new TrackPoint(frameLatitude, frameLongitude, null, null, calculatedSpeed, null, null, frameTime);
+                        } else {
+                            framePoint
+                                    = new TrackPoint(frameLatitude, frameLongitude, null, null, null, null, null, frameTime);
+                        }
+                    } else {
+                        framePoint
+                                = new TrackPoint(frameLatitude, frameLongitude, null, null, metadataSpeed, null, null, frameTime);
+                    }
                     pointList.addPoint(framePoint);
                     lastFrameLongitude = frameLongitude;
                     lastFrameLatitude = frameLatitude;
