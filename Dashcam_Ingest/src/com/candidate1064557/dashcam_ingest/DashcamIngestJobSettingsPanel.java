@@ -5,7 +5,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 
 /**
- * UI component used to make per ingest job settings for sample ingest modules.
+ * UI component used to make per ingest job settings for dashcam ingest module.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettingsPanel {

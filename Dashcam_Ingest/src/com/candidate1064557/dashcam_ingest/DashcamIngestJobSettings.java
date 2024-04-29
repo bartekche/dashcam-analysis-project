@@ -4,7 +4,7 @@ import java.util.Date;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
 /**
- * Ingest job options for sample ingest module instances.
+ * Ingest job options for dashcam ingest module.
  */
 public class DashcamIngestJobSettings implements IngestModuleIngestJobSettings {
 

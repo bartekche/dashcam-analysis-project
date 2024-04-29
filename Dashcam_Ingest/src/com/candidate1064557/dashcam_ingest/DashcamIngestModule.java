@@ -25,6 +25,10 @@ import org.sleuthkit.datamodel.blackboardutils.attributes.GeoWaypoints;
 import org.sleuthkit.datamodel.blackboardutils.attributes.GeoWaypoints.Waypoint;
 import org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPoints.TrackPoint;
 
+/**
+ * Main logic for dashcam ingest module.
+ */
+
 class DashcamIngestModule implements DataSourceIngestModule {
 
     private final String windowsExifCommand = "exiftool.exe -p \"$gpslatitude#|$gpslongitude#|$gpsspeed#|${GPSDateTime;DateFmt('%s%f')}\" -ee3 ";
@@ -185,8 +189,8 @@ class DashcamIngestModule implements DataSourceIngestModule {
                 }
             }
         } catch(TimeoutException e){
-            logger.log(Level.SEVERE, String.format("Process timed out - possible corrupted metadata in %s", fileName), e);
-            sendMsg(String.format("Process timed out - possible corrupted metadata in %s", fileName), IngestMessage.MessageType.WARNING);
+            logger.log(Level.SEVERE, String.format("Process timed out - corrupted or no metadata in %s", fileName), e);
+            sendMsg(String.format("Process timed out - corrupted or no metadata in %s", fileName), IngestMessage.MessageType.WARNING);
             return new GeoTrackPoints();
         } catch (Exception e) {
             logger.log(Level.SEVERE, String.format("Exiftool output parsing failed - skipping file %s", fileName), e);
