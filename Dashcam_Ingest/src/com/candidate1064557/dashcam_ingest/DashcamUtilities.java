@@ -2,7 +2,6 @@ package com.candidate1064557.dashcam_ingest;
 
 /**
  * Dashcam utility methods used in the module
- * @author candidate1064557
  */
 public class DashcamUtilities {
 
