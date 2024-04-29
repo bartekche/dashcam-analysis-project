@@ -23,11 +23,12 @@ public class DashcamIngestJobSettingsPanel extends IngestModuleIngestJobSettings
         longitudeField.setText(settings.longitudeGeofence());
         radiusField.setText(settings.radiusGeofence());
         dateField.setValue(settings.dateGeofence());
+        distanceField.setValue(settings.distanceThreshold());
         useCalculatedSpeedCheckBox.setSelected(settings.useCalculatedSpeed());
-        removeOutliersCheckBox.setSelected(settings.removeOutliers());
         mp4CheckBox.setSelected(settings.analyseMp4());
         movCheckBox.setSelected(settings.analyseMov());
         enableGeofencingCheckBox.setSelected(false);
+        removeOutliersCheckBox.setSelected(false);
         dateField.setEnabled(enableGeofencingCheckBox.isSelected());
         dateLabel.setEnabled(enableGeofencingCheckBox.isSelected());
         latitudeField.setEnabled(enableGeofencingCheckBox.isSelected());

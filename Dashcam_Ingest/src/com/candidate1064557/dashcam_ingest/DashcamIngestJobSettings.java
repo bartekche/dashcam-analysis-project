@@ -17,7 +17,7 @@ public class DashcamIngestJobSettings implements IngestModuleIngestJobSettings {
     private String latitudeGeofence = "0.000";
     private String longitudeGeofence = "0.000";
     private String radiusGeofence = "0.00";
-    private long distanceThreshold = 0;
+    private long distanceThreshold = 300;
     private Date dateGeofence = new Date();
 
     DashcamIngestJobSettings() {

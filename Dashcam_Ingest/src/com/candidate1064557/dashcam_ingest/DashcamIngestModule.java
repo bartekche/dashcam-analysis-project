@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.Date;
+import java.util.concurrent.TimeoutException;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -101,6 +102,17 @@ class DashcamIngestModule implements DataSourceIngestModule {
         }
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            if(!reader.ready()){
+                for(int i=0; i<20; i++){
+                    Thread.sleep(500);
+                    if(reader.ready()){
+                        break;
+                    }
+                }
+                if(!reader.ready()){
+                    throw new TimeoutException("Reader timed out");
+                }
+            }
             while ((frameData = reader.readLine()) != null) {
                 //Reading data for a single waypoint:
                 String[] frameDataSeparated = frameData.split("\\|");
@@ -172,9 +184,13 @@ class DashcamIngestModule implements DataSourceIngestModule {
                     lastFrameTime = frameTime;
                 }
             }
+        } catch(TimeoutException e){
+            logger.log(Level.SEVERE, String.format("Process timed out - possible corrupted metadata in %s", fileName), e);
+            sendMsg(String.format("Process timed out - possible corrupted metadata in %s", fileName), IngestMessage.MessageType.WARNING);
+            return new GeoTrackPoints();
         } catch (Exception e) {
             logger.log(Level.SEVERE, String.format("Exiftool output parsing failed - skipping file %s", fileName), e);
-            sendMsg(String.format("Exiftool output failed - skipping file %s", fileName), IngestMessage.MessageType.WARNING);
+            sendMsg(String.format("Exiftool output failed - skipping file %s", fileName), IngestMessage.MessageType.ERROR);
             return new GeoTrackPoints();
         }
         //Inform the user if any waypoints were discarded in the file
