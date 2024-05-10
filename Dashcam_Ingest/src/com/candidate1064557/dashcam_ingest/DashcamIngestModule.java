@@ -80,7 +80,7 @@ class DashcamIngestModule implements DataSourceIngestModule {
     private GeoTrackPoints extractTrack(AbstractFile currentFile) {
         String frameData;
         double frameLatitude, frameLongitude, metadataSpeed;
-        double calculatedSpeed = 0.0d, calculatedDistance;
+        double calculatedSpeed = 0.0d, calculatedDistance = 0.0d;
         double speedToUse;
         double accumulatedDistance = 0.0d;
         double lastFrameLatitude = 0.0d;
@@ -154,12 +154,14 @@ class DashcamIngestModule implements DataSourceIngestModule {
                 }
 
                 //Calculate distance between this waypoint and the last one recorded
-                calculatedDistance
-                        = DashcamUtilities.getHaversineDistance(frameLongitude, frameLatitude, lastFrameLongitude, lastFrameLatitude);
-                accumulatedDistance += calculatedDistance;
-
+                if(removeOutliers || useCalculatedSpeed){
+                    calculatedDistance
+                            = DashcamUtilities.getHaversineDistance(frameLongitude, frameLatitude, lastFrameLongitude, lastFrameLatitude);
+                    accumulatedDistance += calculatedDistance;
+                }
+            
                 //Calculate speed if time increased
-                if (frameTime != lastFrameTime) {
+                if (useCalculatedSpeed && frameTime != lastFrameTime) {
                     calculatedSpeed = accumulatedDistance / (frameTime - lastFrameTime); //m/s
                     accumulatedDistance = 0.0d;
                     haveCalculatedSpeed = true;
